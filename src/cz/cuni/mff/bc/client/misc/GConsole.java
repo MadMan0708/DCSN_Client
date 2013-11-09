@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cz.cuni.mff.bc.common.main;
+package cz.cuni.mff.bc.client.misc;
 
 import com.googlecode.lanterna.gui.Action;
 import com.googlecode.lanterna.gui.Border;
@@ -81,11 +81,11 @@ public class GConsole extends Thread {
         hist.addFirst(msg);
     }
 
-    public static void printToLog(String message) {
+    public static synchronized void printToLog(String message) {
         log.insertLine(0, " " + message + "  ");
     }
 
-    public static void printToHistory(String message) {
+    public static synchronized void printToHistory(String message) {
         history.insertLine(0, " " + message + "  ");
     }
 

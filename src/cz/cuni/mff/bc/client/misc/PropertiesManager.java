@@ -2,14 +2,16 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cz.cuni.mff.bc.common.main;
+package cz.cuni.mff.bc.client.misc;
 
-import cz.cuni.mff.bc.common.enums.ELoggerMessages;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Storing and loading properties file Properties file can be stored manually or
@@ -24,7 +26,6 @@ public class PropertiesManager {
     private String file;
     private Properties prop = new Properties();
     private boolean propSet = false;
-    private Logger logger;
 
     private void checkPropExistance() {
         if (!propSet) {
@@ -32,10 +33,12 @@ public class PropertiesManager {
             propSet = true;
         }
     }
+    private static final Logger LOG = Logger.getLogger(PropertiesManager.class.getName());
 
-    public PropertiesManager(Logger logger, String file) {
-        this.logger = logger;
+    public PropertiesManager(String file, Handler logHandler) {
+        LOG.addHandler(logHandler);
         this.file = file;
+
     }
 
     public String getProperty(String key) {
@@ -64,13 +67,13 @@ public class PropertiesManager {
             File p = new File(file);
             if (p.exists()) {
                 prop.load(new FileInputStream(file));
-                logger.log("Loading properties file");
+                LOG.log(Level.INFO, "Loading properties file");
             } else {
-                logger.log("Creating new properties file");
+                LOG.log(Level.INFO, "Creating new properties file");
             }
         } catch (IOException e) {
-            logger.log("Properties file couldn't be loaded: " + e.getMessage(), ELoggerMessages.ERROR);
-            logger.log("Creating new properties file: " + e.getMessage());
+            LOG.log(Level.WARNING, "Properties file couldn''t be loaded: {0}", e.getMessage());
+            LOG.log(Level.INFO, "Creating new properties file: {0}", e.getMessage());
             prop = new Properties();
         }
     }
@@ -79,7 +82,7 @@ public class PropertiesManager {
         try {
             prop.store(new FileOutputStream(file), null);
         } catch (IOException e) {
-            logger.log("Properties file could not be stored " + e.getMessage(), ELoggerMessages.ERROR);
+            LOG.log(Level.WARNING, "Properties file could not be stored {0}", e.getMessage());
         }
     }
 }

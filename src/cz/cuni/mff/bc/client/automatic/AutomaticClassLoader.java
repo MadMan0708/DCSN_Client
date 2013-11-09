@@ -4,8 +4,6 @@
  */
 package cz.cuni.mff.bc.client.automatic;
 
-import cz.cuni.mff.bc.client.Client;
-import cz.cuni.mff.bc.common.enums.ELoggerMessages;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -60,7 +58,7 @@ public class AutomaticClassLoader extends ClassLoader {
             resolveClass(c);
             return c;
         } catch (ClassFormatError e) {
-            Client.logger.log(e.toString(), ELoggerMessages.ERROR);
+//            Client.logger.log(e.toString(), ELoggerMessages.ERROR);
         }
         return null;
 

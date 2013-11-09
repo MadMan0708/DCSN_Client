@@ -4,23 +4,29 @@
  */
 package cz.cuni.mff.bc.client;
 
-import cz.cuni.mff.bc.common.main.ProjectUID;
-import cz.cuni.mff.bc.common.main.PropertiesManager;
-import cz.cuni.mff.bc.common.main.IConsole;
-import cz.cuni.mff.bc.common.main.GConsole;
-import cz.cuni.mff.bc.common.main.Logger;
-import cz.cuni.mff.bc.common.enums.ProjectState;
-import cz.cuni.mff.bc.common.enums.ELoggerMessages;
-import cz.cuni.mff.bc.client.networkIO.ProgressChecker;
-import cz.cuni.mff.bc.common.main.ProjectInfo;
+import cz.cuni.mff.bc.client.misc.PropertiesManager;
+import cz.cuni.mff.bc.client.misc.IConsole;
+import cz.cuni.mff.bc.client.misc.GConsole;
+import cz.cuni.mff.bc.api.enums.ProjectState;
+import cz.cuni.mff.bc.api.main.ClientAPIWithLog;
+import cz.cuni.mff.bc.api.main.Commander;
+import cz.cuni.mff.bc.client.logging.CustomFormater;
+import cz.cuni.mff.bc.client.logging.CustomHandler;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
-import java.util.ArrayList;
+import java.util.jar.Attributes;
+import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
+import java.util.logging.Handler;
+import java.util.logging.Level;
 
 /**
  *
@@ -29,20 +35,25 @@ import java.util.ArrayList;
 public class Client implements IConsole {
 
     private PropertiesManager propMan;
-    public static Logger logger;
     private String clientID;
     private int[] serverAddress;
     private int serverPort;
     private String downloadDir;
-    private Client_API api;
+    private ClientAPIWithLog clientAPIWithLog;
+    private InternalAPIWithLog internalAPIWithLog;
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(Client.class.getName());
+    private Handler logHandler;
 
     public Client() {
-        logger = new Logger("client.log");
-        propMan = new PropertiesManager(logger, "client.config.properties");
-        api = new Client_API();
+        logHandler = new CustomHandler(new File("client.log"));
+        logHandler.setFormatter(new CustomFormater());
+        logHandler.setLevel(Level.ALL);
+
+        propMan = new PropertiesManager("client.config.properties", logHandler);
     }
 
     public void initialize() {
+
         clientID = propMan.getProperty("name");
         if (propMan.getProperty("address") != null) {
             setServerAddress(propMan.getProperty("address"));
@@ -58,67 +69,34 @@ public class Client implements IConsole {
         }
     }
 
-    public void printAllProjects() {
-        try {
-            ArrayList<ProjectInfo> pAll = api.getProjectList();
-            for (ProjectInfo projectInfo : pAll) {
-                logger.log(projectInfo.toString());
-            }
-        } catch (RemoteException e) {
-            logger.log("Project list couldn't be obtained due to network error: " + e.getMessage(), ELoggerMessages.ERROR);
-        }
-    }
+    public void loadJar(Path jar, Path data) {
+        try (JarInputStream jarStream = new JarInputStream(new FileInputStream(jar.toFile()))) {
+            Manifest mf = jarStream.getManifest();
+            Attributes mainAttribs = mf.getMainAttributes();
+            String mainClazz = mainAttribs.getValue(Attributes.Name.MAIN_CLASS);
+            try {
+                ClassLoader cl = new URLClassLoader(new URL[]{jar.toUri().toURL()});
 
-    public void printProjects(ProjectState state) {
-        try {
-            ArrayList<ProjectInfo> pAll = api.getProjectList(state);
-            for (ProjectInfo projectInfo : pAll) {
-                logger.log(projectInfo.toString());
+                final Class<?> claxx = cl.loadClass(mainClazz);
+                final Commander commander = (Commander) claxx.newInstance();
+                new Thread() {
+                    @Override
+                    public void run() {
+                        commander.start(new ClientAPIWithLog(internalAPIWithLog.getRemoteService(), logHandler));
+                    }
+                }.start();
+
+            } catch (InstantiationException | MalformedURLException | ClassNotFoundException | IllegalAccessException | SecurityException e) {
+                // logger.log(e.toString(), ELoggerMessages.ERROR);
             }
-        } catch (RemoteException e) {
-            logger.log("Project list couldn't be obtained due to network error: " + e.getMessage(), ELoggerMessages.ERROR);
+        } catch (IOException e) {
+            // logger.log(e.toString(), ELoggerMessages.ERROR);
         }
     }
 
     private void exitClient() {
-        try {
-            api.stopRecievingTasks();
-            System.exit(0);
-        } catch (RemoteException e) {
-            logger.log("Recieving of tasks could't be stoped due to network error: " + e.getMessage(), ELoggerMessages.ERROR);
-        }
-    }
-
-    public void connect() {
-        try {
-            if (api.connect(getServerAddressString(), serverPort, clientID)) {
-                logger.log("Connected to the server " + getServerAddressString() + ":" + serverPort + " with client ID " + clientID);
-            } else {
-                logger.log("Client ID \"" + clientID + "\" is already in the system ");
-            }
-        } catch (RemoteException e) {
-            logger.log("Problem during creating session: " + e.toString(), ELoggerMessages.ERROR);
-        } catch (IOException e) {
-            logger.log("Connection problem: " + e.toString(), ELoggerMessages.ERROR);
-        }
-    }
-
-    public void startRecievingTasks() {
-        try {
-            logger.log("Client is now participating in task computation");
-            api.startRecievingTasks();
-        } catch (RemoteException e) {
-            logger.log("Computation couldn't start due to network error: " + e.getMessage());
-        }
-    }
-
-    public void stopRecievingTasks() {
-        try {
-            api.stopRecievingTasks();
-            logger.log("Client has stopped computation of tasks");
-        } catch (RemoteException e) {
-            logger.log("Computation couldn't be stopped to network error: " + e.getMessage());
-        }
+        internalAPIWithLog.stopRecievingTasks();
+        System.exit(0);
     }
 
     private void setServerAddress(String serverIPAddress) {
@@ -185,159 +163,33 @@ public class Client implements IConsole {
 
     private void printClientName() {
         if (clientID == null) {
-            logger.log("Client name is not set yet!");
+            LOG.log(Level.INFO, "Client name is not set yet!");
         } else {
-            logger.log("Client name is set to: " + clientID);
+            LOG.log(Level.INFO, "Client name is set to: {0}", clientID);
         }
     }
 
     private void printServerAddress() {
         if (serverAddress == null) {
-            logger.log("Server adress is not set yet!");
+            LOG.log(Level.INFO, "Server adress is not set yet!");
         } else {
-            logger.log("Server address is set to : " + getServerAddressString());
+            LOG.log(Level.INFO, "Server address is set to : {0}", getServerAddressString());
         }
     }
 
     private void printServerPort() {
         if (serverPort == -1) {
-            logger.log("Server adress is not set yet!");
+            LOG.log(Level.INFO, "Server adress is not set yet!");
         } else {
-            logger.log("Server port is set to : " + serverPort);
+            LOG.log(Level.INFO, "Server port is set to : {0}", serverPort);
         }
     }
 
     private void printDownloadDir() {
         if (downloadDir == null) {
-            logger.log("Download dir is not set yet!");
+            LOG.log(Level.INFO, "Download dir is not set yet!");
         } else {
-            logger.log("Download dir is set to : " + downloadDir);
-        }
-    }
-
-    public void uploadProject(Path pathToProject, String projectName, int projectPriority) {
-        try {
-            final String projectNameLocal = projectName;
-            final ProgressChecker pc = api.uploadProject(pathToProject, projectName, projectPriority);
-            if (pc != null) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        logger.log("Project: " + projectNameLocal + ", Uploaded: 0 %...");
-                        while (pc.isInProgress()) {
-                            logger.log("Project: " + projectNameLocal + ", Uploaded: " + pc.getProgress() + " %...");
-                            try {
-                                Thread.sleep(800);
-                            } catch (InterruptedException e) {
-                                logger.log("Progress checking during uploading has been interupted: " + e.getMessage());
-                            }
-                        }
-                        try {
-                            pc.wasSuccesfull();
-                            logger.log("Project: " + projectNameLocal + ", Uploaded: 100 %...");
-                            logger.log("Project " + projectNameLocal + " has been uploaded");
-                        } catch (IOException e) {
-                            logger.log(e.getMessage());
-                        }
-                    }
-                }).start();
-            } else {
-                logger.log("Project with name " + projectName + " already exists");
-            }
-        } catch (RemoteException e) {
-            logger.log("Project couldn't be uploded due to network error:" + e.getMessage());
-        }
-    }
-
-    public void disconnect() {
-        try {
-            api.disconnect();
-        } catch (IOException e) {
-            logger.log("Disconnecting unsuccessful due to network erro:" + e.getMessage());
-        }
-    }
-
-    public void pauseProject(String projectName) {
-        try {
-            if (api.pauseProject(projectName)) {
-                logger.log("Project " + projectName + " was successfuly paused");
-            } else {
-                logger.log("No such project: " + projectName);
-            }
-        } catch (RemoteException e) {
-            logger.log("Prolem during pausing project due to network erorr: " + e.getMessage());
-        }
-    }
-
-    public void unpauseProject(String projectName) {
-        try {
-            if (api.unpauseProject(projectName)) {
-                logger.log("Project " + projectName + " was successfuly unpaused");
-            } else {
-                logger.log("No such project: " + projectName);
-            }
-        } catch (RemoteException e) {
-            logger.log("Prolem during unpausing project due to network erorr: " + e.getMessage());
-        }
-    }
-
-    public void cancelProject(String projectName) {
-        try {
-            if (api.cancelProject(projectName)) {
-                logger.log("Project " + projectName + " was successfuly canceled");
-            } else {
-                logger.log("No such project: " + projectName);
-            }
-        } catch (RemoteException e) {
-            logger.log("Prolem during canceling project due to network erorr: " + e.getMessage());
-        }
-    }
-
-    public void isProjectReadyForDownload(String projectName) {
-        try {
-            if (api.isProjectReadyForDownload(projectName)) {
-                logger.log("Project " + projectName + " is ready for download");
-            } else {
-                logger.log("Project " + projectName + " is not ready for download");
-            }
-        } catch (RemoteException e) {
-            logger.log("Problem during determining project state due to network error", ELoggerMessages.ERROR);
-        }
-    }
-
-    public void download(String projectName) {
-        try {
-            final String projectNameLocal = projectName;
-            final ProgressChecker pc = api.downloadProject(projectName, Paths.get(downloadDir + File.separator + projectName + ".zip"));
-            if (pc != null) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        logger.log("Project: " + projectNameLocal + ", Downloaded: 0 %...");
-                        while (pc.isInProgress()) {
-                            logger.log("Project: " + projectNameLocal + ", Downloaded: " + pc.getProgress() + " %...");
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                                logger.log("Progress checking during downloading has been interupted: " + e.getMessage());
-                            }
-                        }
-                        try {
-                            pc.wasSuccesfull();
-                            logger.log("Project: " + projectNameLocal + ", Downloaded: 100 %...");
-                            logger.log("Project " + projectNameLocal + " has been downloaded");
-                        } catch (RemoteException e) {
-                            logger.log(e.getMessage());
-                        } catch (IOException e) {
-                            logger.log(e.getMessage());
-                        }
-                    }
-                }).start();
-            } else {
-                logger.log("Project " + projectName + " is not ready for download");
-            }
-        } catch (RemoteException e) {
-            logger.log("Project couldn't be downloaded due to network error:" + e.getMessage());
+            LOG.log(Level.INFO, "Download dir is set to : {0}", downloadDir);
         }
     }
 
@@ -363,21 +215,29 @@ public class Client implements IConsole {
              }
 
              } else {
-             logger.log("Expected parameters: 4, 5", ELoggerMessages.ALERT);
-             logger.log("1: Path to file with project", ELoggerMessages.ALERT);
-             logger.log("2: Project name", ELoggerMessages.ALERT);
-             logger.log("3: Project prority", ELoggerMessages.ALERT);
-             logger.log("4: Path to class file implementing IAlert interface", ELoggerMessages.ALERT);
-             logger.log("5(OPTIONAL): Number of cycles, without this parameter it will repeat cycles until user cancel the automatic calculation", ELoggerMessages.ALERT);
+             logger.log("Expected parameters: 4, 5");
+             logger.log("1: Path to file with project");
+             logger.log("2: Project name");
+             logger.log("3: Project prority");
+             logger.log("4: Path to class file implementing IAlert interface");
+             logger.log("5(OPTIONAL): Number of cycles, without this parameter it will repeat cycles until user cancel the automatic calculation");
 
              }
              break;
              }*/
+            case "test": {
+                String jar = cmd[1];
+                String data = cmd[2];
+                LOG.log(Level.INFO, "Proccessing");
+
+                loadJar(Paths.get(jar), Paths.get(data));
+            }
+            break;
             case "getName": {
                 if (checkParamNum(0, cmd)) {
                     printClientName();
                 } else {
-                    logger.log("Command has no parameters", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Command has no parameters");
                 }
                 break;
             }
@@ -385,7 +245,7 @@ public class Client implements IConsole {
                 if (checkParamNum(0, cmd)) {
                     printServerAddress();
                 } else {
-                    logger.log("Command has no parameters", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Command has no parameters");
                 }
                 break;
             }
@@ -393,40 +253,40 @@ public class Client implements IConsole {
                 if (checkParamNum(0, cmd)) {
                     printServerPort();
                 } else {
-                    logger.log("Command has no parameters", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Command has no parameters");
                 }
                 break;
             }
             case "setName": {
                 if (checkParamNum(1, cmd)) {
                     clientID = cmd[1];
-                    logger.log("Client name is now set to: " + clientID);
+                    LOG.log(Level.INFO, "Client name is now set to: {0}", clientID);
                     propMan.setProperty("name", clientID);
                 } else {
-                    logger.log("Expected parameters: 1", ELoggerMessages.ALERT);
-                    logger.log("1: Client new id", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Expected parameters: 1");
+                    LOG.log(Level.INFO, "1: Client new id");
                 }
                 break;
             }
             case "setServerAddress": {
                 if (checkParamNum(1, cmd)) {
                     setServerAddress(cmd[1]);
-                    logger.log("Server adress is now set to: " + getServerAddressString());
+                    LOG.log(Level.INFO, "Server adress is now set to: {0}", getServerAddressString());
                     propMan.setProperty("address", getServerAddressString());
                 } else {
-                    logger.log("Expected parameters: 1", ELoggerMessages.ALERT);
-                    logger.log("1: Server new IP address", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Expected parameters: 1");
+                    LOG.log(Level.INFO, "1: Server new IP address");
                 }
                 break;
             }
             case "setServerPort": {
                 if (checkParamNum(1, cmd)) {
                     setServerPort(Integer.parseInt(cmd[1]));
-                    logger.log("Server port is now set to: " + serverPort);
+                    LOG.log(Level.INFO, "Server port is now set to: {0}", serverPort);
                     propMan.setProperty("port", serverPort + "");
                 } else {
-                    logger.log("Expected parameters: 1", ELoggerMessages.ALERT);
-                    logger.log("1: Server new port", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Expected parameters: 1");
+                    LOG.log(Level.INFO, "1: Server new port");
                 }
                 break;
             }
@@ -434,7 +294,7 @@ public class Client implements IConsole {
                 if (checkParamNum(0, cmd)) {
                     printDownloadDir();
                 } else {
-                    logger.log("Command has no parameters", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Command has no parameters");
                 }
                 break;
 
@@ -446,14 +306,14 @@ public class Client implements IConsole {
                         if (!setDownloadDir(f.getCanonicalPath())) {
                             throw new IOException();
                         }
-                        logger.log("Download dir is set to: " + getDownloadDir());
+                        LOG.log(Level.INFO, "Download dir is set to: {0}", getDownloadDir());
                         propMan.setProperty("downloadDir", getDownloadDir());
                     } catch (IOException e) {
-                        logger.log("Path " + cmd[1] + " is not correct path");
+                        LOG.log(Level.WARNING, "Path {0} is not correct path", cmd[1]);
                     }
                 } else {
-                    logger.log("Expected parameters: 1", ELoggerMessages.ALERT);
-                    logger.log("1: new download dir", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Expected parameters: 1");
+                    LOG.log(Level.INFO, "1: new download dir");
                 }
                 break;
 
@@ -465,23 +325,23 @@ public class Client implements IConsole {
                     printServerPort();
                     printDownloadDir();
                 } else {
-                    logger.log("Command has no parameters", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Command has no parameters");
                 }
                 break;
             }
             case "startCalculation": {
                 if (checkParamNum(0, cmd)) {
-                    startRecievingTasks();
+                    internalAPIWithLog.startRecievingTasks();
                 } else {
-                    logger.log("Command has no parameters", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Command has no parameters");
                 }
                 break;
             }
             case "endCalculation": {
                 if (checkParamNum(0, cmd)) {
-                    stopRecievingTasks();
+                    internalAPIWithLog.stopRecievingTasks();
                 } else {
-                    logger.log("Command has no parameters", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Command has no parameters");
                 }
                 break;
             }
@@ -489,30 +349,32 @@ public class Client implements IConsole {
                 if (checkParamNum(0, cmd)) {
                     boolean ready = true;
                     if (clientID == null) {
-                        logger.log("Client name has to be set to perform connection!", ELoggerMessages.ALERT);
+                        LOG.log(Level.INFO, "Client name has to be set to perform connection!");
                         ready = false;
                     }
                     if (serverAddress == null) {
-                        logger.log("Server address has to be set to perform connection!", ELoggerMessages.ALERT);
+                        LOG.log(Level.INFO, "Server address has to be set to perform connection!");
                         ready = false;
                     }
                     if (serverPort == -1) {
-                        logger.log("Server port has to be set to perform connection!", ELoggerMessages.ALERT);
+                        LOG.log(Level.INFO, "Server port has to be set to perform connection!");
                         ready = false;
                     }
                     if (ready) {
-                        connect();
+                        internalAPIWithLog = new InternalAPIWithLog(getServerAddressString(), serverPort, clientID, logHandler);
+                        internalAPIWithLog.connect();
+                        clientAPIWithLog = new ClientAPIWithLog(internalAPIWithLog.getRemoteService(), logHandler);
                     }
                 } else {
-                    logger.log("Command has no parameters", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Command has no parameters");
                 }
                 break;
             }
             case "disconnect": {
                 if (checkParamNum(0, cmd)) {
-                    disconnect();
+                    internalAPIWithLog.disconnect();
                 } else {
-                    logger.log("Command has no parameters", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Command has no parameters");
                 }
                 break;
             }
@@ -520,12 +382,12 @@ public class Client implements IConsole {
                 if (checkParamNum(3, cmd)) {
                     Path path = Paths.get(cmd[1]);
                     path = path.toAbsolutePath();
-                    uploadProject(path, cmd[2], Integer.parseInt(cmd[3]));
+                    clientAPIWithLog.uploadProject(path, cmd[2], Integer.parseInt(cmd[3]));
                 } else {
-                    logger.log("Expected parameters: 3", ELoggerMessages.ALERT);
-                    logger.log("1: Path to project file", ELoggerMessages.ALERT);
-                    logger.log("2: Project name", ELoggerMessages.ALERT);
-                    logger.log("3: Project priority", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Expected parameters: 3");
+                    LOG.log(Level.INFO, "1: Path to project file");
+                    LOG.log(Level.INFO, "2: Project name");
+                    LOG.log(Level.INFO, "3: Project priority");
                 }
                 break;
             }
@@ -534,13 +396,13 @@ public class Client implements IConsole {
             case "download": {
                 if (checkParamNum(1, cmd)) {
                     if (downloadDir == null) {
-                        logger.log("Download dir has to be set before downloading project", ELoggerMessages.ALERT);
+                        LOG.log(Level.WARNING, "Download dir has to be set before downloading project");
                     } else {
-                        download(cmd[1]);
+                        clientAPIWithLog.download(cmd[1], downloadDir);
                     }
                 } else {
-                    logger.log("Expected parameters: 1");
-                    logger.log("1: Project name", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Expected parameters: 1");
+                    LOG.log(Level.INFO, "1: Project name");
                 }
                 break;
             }
@@ -550,23 +412,23 @@ public class Client implements IConsole {
                 if (checkParamNum(1, cmd)) {
                     switch (cmd[1]) {
                         case "all":
-                            printAllProjects();
+                            clientAPIWithLog.printAllProjects();
                             break;
                         case "active":
-                            printProjects(ProjectState.ACTIVE);
+                            clientAPIWithLog.printProjects(ProjectState.ACTIVE);
                             break;
                         case "paused":
-                            printProjects(ProjectState.PAUSED);
+                            clientAPIWithLog.printProjects(ProjectState.PAUSED);
                             break;
                         case "completed":
-                            printProjects(ProjectState.COMPLETED);
+                            clientAPIWithLog.printProjects(ProjectState.COMPLETED);
                             break;
                         default:
-                            logger.log("states which can listed are: all, completed, paused, active", ELoggerMessages.ALERT);
+                            LOG.log(Level.INFO, "states which can listed are: all, completed, paused, active");
                     }
                 } else {
-                    logger.log("Expected parameters: 1", ELoggerMessages.ALERT);
-                    logger.log("1: Type of projects - all, completed, paused, active", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Expected parameters: 1");
+                    LOG.log(Level.INFO, "1: Type of projects - all, completed, paused, active");
                 }
                 break;
             }
@@ -574,20 +436,20 @@ public class Client implements IConsole {
 
             case "pause": {
                 if (checkParamNum(1, cmd)) {
-                    pauseProject(cmd[1]);
+                    clientAPIWithLog.pauseProject(cmd[1]);
                 } else {
-                    logger.log("Expected parameters: 1", ELoggerMessages.ALERT);
-                    logger.log("1: Name of project which should be paused", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Expected parameters: 1");
+                    LOG.log(Level.INFO, "1: Name of project which should be paused");
                 }
                 break;
             }
 
             case "unpause": {
                 if (checkParamNum(1, cmd)) {
-                    unpauseProject(cmd[1]);
+                    clientAPIWithLog.unpauseProject(cmd[1]);
                 } else {
-                    logger.log("Expected parameters: 1", ELoggerMessages.ALERT);
-                    logger.log("1: Name of project which should be unpaused", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Expected parameters: 1");
+                    LOG.log(Level.INFO, "1: Name of project which should be unpaused");
                 }
                 break;
             }
@@ -595,10 +457,10 @@ public class Client implements IConsole {
 
             case "cancel": {
                 if (checkParamNum(1, cmd)) {
-                    cancelProject(cmd[1]);
+                    clientAPIWithLog.cancelProject(cmd[1]);
                 } else {
-                    logger.log("Expected parameters: 1", ELoggerMessages.ALERT);
-                    logger.log("1: Name of project which should be canceled", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Expected parameters: 1");
+                    LOG.log(Level.INFO, "1: Name of project which should be canceled");
                 }
                 break;
             }
@@ -607,10 +469,10 @@ public class Client implements IConsole {
             case "downloadReady": {
 
                 if (checkParamNum(1, cmd)) {
-                    isProjectReadyForDownload(cmd[1]);
+                    clientAPIWithLog.isProjectReadyForDownload(cmd[1]);
                 } else {
-                    logger.log("Expected parameters: 1", ELoggerMessages.ALERT);
-                    logger.log("1: Name of project which should be checkes if is ready for download", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Expected parameters: 1");
+                    LOG.log(Level.INFO, "1: Name of project which should be checkes if is ready for download");
                 }
                 break;
             }
@@ -620,20 +482,20 @@ public class Client implements IConsole {
                 if (checkParamNum(0, cmd)) {
                     exitClient();
                 } else {
-                    logger.log("Command has no parameters", ELoggerMessages.ALERT);
+                    LOG.log(Level.INFO, "Command has no parameters");
                 }
                 break;
             }
 
 
             case "": {
-                logger.log("No command written", ELoggerMessages.ALERT);
+                LOG.log(Level.WARNING, "No command written");
                 break;
             }
 
 
             default: {
-                logger.log("Command doesn't exist", ELoggerMessages.ALERT);
+                LOG.log(Level.WARNING, "Command doesn't exist");
                 break;
             }
         }
@@ -648,7 +510,7 @@ public class Client implements IConsole {
                 proceedCommand(br.readLine());
             }
         } catch (IOException e) {
-            logger.log("Problem with reading command from console", ELoggerMessages.ERROR);
+            LOG.log(Level.WARNING, "Problem with reading command from console");
         }
     }
 
@@ -660,9 +522,5 @@ public class Client implements IConsole {
 
     private String[] parseCommand(String cmd) {
         return cmd.split("\\s+");
-    }
-
-    private Object Thread(Runnable runnable) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

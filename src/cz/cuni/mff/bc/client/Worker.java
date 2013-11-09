@@ -4,9 +4,12 @@
  */
 package cz.cuni.mff.bc.client;
 
-import cz.cuni.mff.bc.common.enums.ECalculationState;
-import cz.cuni.mff.bc.common.main.Task;
-import cz.cuni.mff.bc.common.main.TaskID;
+import cz.cuni.mff.bc.api.enums.TaskState;
+import cz.cuni.mff.bc.api.main.Task;
+import cz.cuni.mff.bc.api.main.TaskID;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Calculates and returns computed tasks
@@ -15,6 +18,7 @@ import cz.cuni.mff.bc.common.main.TaskID;
  */
 public class Worker implements IWorker {
 
+    private static final Logger LOG = Logger.getLogger(Worker.class.getName());
     private Task tsk;
 
     /**
@@ -22,8 +26,10 @@ public class Worker implements IWorker {
      *
      * @param tsk Task to be calculated
      */
-    public Worker(Task tsk) {
+    public Worker(Task tsk, Handler loggingHandler) {
         this.tsk = tsk;
+        LOG.addHandler(loggingHandler);
+
     }
 
     @Override
@@ -33,10 +39,10 @@ public class Worker implements IWorker {
 
     @Override
     public Task call() throws Exception {
-        Client.logger.log("Task : " + tsk.getUnicateID() + " >> calculation started");
+        LOG.log(Level.INFO, "Task : {0} >> calculation started", tsk.getUnicateID());
         tsk.calculate();
-        tsk.setState(ECalculationState.COMPLETE);
-        Client.logger.log("Task : " + tsk.getUnicateID() + " >> calculation completed");
+        tsk.setState(TaskState.COMPLETE);
+        LOG.log(Level.INFO, "Task : {0} >> calculation completed", tsk.getUnicateID());
         return tsk;
     }
 }

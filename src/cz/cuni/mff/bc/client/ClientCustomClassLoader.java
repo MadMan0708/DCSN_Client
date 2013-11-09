@@ -4,9 +4,9 @@
  */
 package cz.cuni.mff.bc.client;
 
-import cz.cuni.mff.bc.common.main.IServer;
-import cz.cuni.mff.bc.common.main.ProjectUID;
-import cz.cuni.mff.bc.common.main.TaskID;
+import cz.cuni.mff.bc.api.main.IServer;
+import cz.cuni.mff.bc.api.main.ProjectUID;
+import cz.cuni.mff.bc.api.main.TaskID;
 import java.io.IOException;
 import java.util.HashMap;
 

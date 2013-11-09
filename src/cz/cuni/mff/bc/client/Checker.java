@@ -4,10 +4,9 @@
  */
 package cz.cuni.mff.bc.client;
 
-import cz.cuni.mff.bc.common.enums.ELoggerMessages;
-import cz.cuni.mff.bc.common.main.IServer;
-import cz.cuni.mff.bc.common.main.Task;
-import cz.cuni.mff.bc.common.main.TaskID;
+import cz.cuni.mff.bc.api.main.IServer;
+import cz.cuni.mff.bc.api.main.Task;
+import cz.cuni.mff.bc.api.main.TaskID;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +16,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class checks regularly server tasks pool. Tasks are collected by client for
@@ -35,14 +37,18 @@ public class Checker extends Thread {
     private String clientID;
     private boolean calculationInProgress;
     private ClientCustomClassLoader clientCustomClassLoader;
+    private static final Logger LOG = Logger.getLogger(Checker.class.getName());
+    private Handler loggingHandler;
 
-    public Checker(IServer remoteService, String clientID, ClientCustomClassLoader clientCustomClassLoader) {
+    public Checker(IServer remoteService, String clientID, ClientCustomClassLoader clientCustomClassLoader, Handler loggingHandler) {
         this.executor = Executors.newFixedThreadPool(limit);
         this.futures = new ArrayList<>();
         this.remoteService = remoteService;
         this.mapping = new HashMap<>();
         this.clientID = clientID;
         this.clientCustomClassLoader = clientCustomClassLoader;
+        this.loggingHandler = loggingHandler;
+        LOG.addHandler(loggingHandler);
     }
 
     /**
@@ -87,11 +93,11 @@ public class Checker extends Thread {
     public void endCalculation() {
         executor.shutdown();
         for (Future<Task> future : futures) {
-            Client.logger.log("Calculation of " + mapping.get(future).getCurrentTaskID().toString() + " has been canceled");
+            LOG.log(Level.INFO, "Calculation of {0} has been canceled", mapping.get(future).getCurrentTaskID().toString());
             try {
                 remoteService.cancelTaskFromClient(clientID, mapping.get(future).getCurrentTaskID());
             } catch (RemoteException e) {
-                Client.logger.log("Canceling taks from client problem: " + e.getMessage(), ELoggerMessages.ERROR);
+                LOG.log(Level.INFO, "Canceling taks from client problem: {0}", e.getMessage());
             }
         }
         executor.shutdownNow();
@@ -104,22 +110,22 @@ public class Checker extends Thread {
             if (checkStates() < limit) {
                 try {
                     if ((tsk = getTask()) != null) { // Checking if there are tasks to calculate
-                        IWorker wrk = new Worker(tsk);
+                        IWorker wrk = new Worker(tsk, loggingHandler);
                         Future<Task> submit = executor.submit(wrk);
                         mapping.put(submit, wrk);
                         futures.add(submit);
                     } else { // no more tasks, sleep
                         if (checkStates() == 0) { // check if all tasks has been sent to the server
                             try {
-                                Client.logger.log("Checker thread is going to sleep, no tasks.");
+                                LOG.log(Level.INFO, "Checker thread is going to sleep, no tasks.");
                                 Checker.sleep(sleepThreadTime);
                             } catch (InterruptedException e) {
-                                Client.logger.log("Checker thread has been interrupted");
+                                LOG.log(Level.CONFIG, "Checker thread has been interrupted");
                             }
                         }
                     }
                 } catch (RemoteException e) {
-                    Client.logger.log("Loading tasks from server: Task could not be obtained : " + e.getMessage(), ELoggerMessages.ERROR);
+                    LOG.log(Level.WARNING, "Loading tasks from server: Task could not be obtained : {0}", e.getMessage());
                     // Handle this exception
                 }
             }
@@ -137,11 +143,11 @@ public class Checker extends Thread {
                     remoteService.saveCompletedTask(clientID, tsk);
                 } catch (ExecutionException e) {
                     // doslo k chybe, na server je treba odeslat info o odasociovani tohoto klienta a tohoto tasku
-                    Client.logger.log("Problem during execution of task " + ((Exception) e.getCause()).toString(), ELoggerMessages.ERROR);
+                    LOG.log(Level.WARNING, "Problem during execution of task {0}", ((Exception) e.getCause()).toString());
                 } catch (InterruptedException e) {
                     // Interuption handling
                 } catch (RemoteException e) {
-                    Client.logger.log("Problem during sending task to server: " + e.getMessage(), ELoggerMessages.ERROR);
+                    LOG.log(Level.WARNING, "Problem during sending task to server: {0}", e.getMessage());
                 }
             }
         }

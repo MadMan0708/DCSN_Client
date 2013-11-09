@@ -4,8 +4,8 @@
  */
 package cz.cuni.mff.bc.client;
 
-import cz.cuni.mff.bc.common.main.Task;
-import cz.cuni.mff.bc.common.main.TaskID;
+import cz.cuni.mff.bc.api.main.Task;
+import cz.cuni.mff.bc.api.main.TaskID;
 import java.util.concurrent.Callable;
 
 /**

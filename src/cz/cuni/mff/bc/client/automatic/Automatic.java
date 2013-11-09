@@ -5,8 +5,8 @@
 package cz.cuni.mff.bc.client.automatic;
 
 import cz.cuni.mff.bc.client.Client;
-import cz.cuni.mff.bc.common.main.CustomIO;
-import cz.cuni.mff.bc.common.main.IAlter;
+import cz.cuni.mff.bc.client.misc.CustomIO;
+import cz.cuni.mff.bc.client.misc.IAlter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -70,19 +70,19 @@ public class Automatic implements IAutomatic {
         this.alterClass = (IAlter) cl.newInstance();
 
         do {
-            Client.logger.log("Cycle " + counter + " of project " + projectName + " started ");
+           // Client.logger.log("Cycle " + counter + " of project " + projectName + " started ");
 //            download();
             if (loops - diff > 0) {
                 nextRoundPrepare();
             }
 
-            Client.logger.log("Cycle " + counter + " of project " + projectName + " ended ");
+            //Client.logger.log("Cycle " + counter + " of project " + projectName + " ended ");
             synchronized (this) {
                 loops = loops - diff;
                 counter++;
             }
         } while (loops > 0);
-        client.logger.log("Automatic calculatin of project " + projectName + " successfully ended");
+//        client.logger.log("Automatic calculatin of project " + projectName + " successfully ended");
         return null;
     }
 
@@ -91,7 +91,7 @@ public class Automatic implements IAutomatic {
         String projectFolder = client.getDownloadDir() + File.separator + projectName + File.separator + "cycle_" + counter + "_completed";
         String output = client.getDownloadDir() + File.separator + projectName + File.separator + "cycle_" + counter + "_after_alternation.zip";
         unZip(project, projectFolder);
-        Client.logger.log(output);
+//        Client.logger.log(output);
         File[] list = new File(projectFolder).listFiles();
         // alter and place to new zip archive
         try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(output))) {
@@ -110,7 +110,7 @@ public class Automatic implements IAutomatic {
         }
         deleteDirectory(new File(projectFolder));
 
-        client.uploadProject(Paths.get(output), projectName, priority);
+       // client.uploadProject(Paths.get(output), projectName, priority);
     }
 
     private void deleteDirectory(File folder) {
