@@ -4,8 +4,8 @@
  */
 package cz.cuni.mff.bc.client.automatic;
 
+import cz.cuni.mff.bc.api.main.CustomIO;
 import cz.cuni.mff.bc.client.Client;
-import cz.cuni.mff.bc.client.misc.CustomIO;
 import cz.cuni.mff.bc.client.misc.IAlter;
 import java.io.File;
 import java.io.FileInputStream;

@@ -27,7 +27,7 @@ public class InternalAPI {
     private Session remoteSession;
     private IServer remoteService;
     private Environment env;
-    private ClientCustomClassLoader cl;
+    private ClientCustomCL cl;
     private String clientName;
     private Checker checker;
     private Timer timer;
@@ -65,7 +65,7 @@ public class InternalAPI {
         remoteSession.send(clientName);
         if (((Boolean) remoteSession.receive()).equals(Boolean.TRUE)) {
             remoteService = (IServer) remoteSession.receive();
-            cl.setRemoteService(remoteService);
+            // cl.setRemoteService(remoteService);
             return true;
         } else {
             return false;
@@ -74,7 +74,7 @@ public class InternalAPI {
 
     public boolean connect(String IPAddress, int port, String clientName) throws RemoteException, IOException {
         this.clientName = clientName;
-        cl = new ClientCustomClassLoader();
+        cl = new ClientCustomCL();
         env = new Environment();
 
         remoteSession = env.newSessionConnector(IPAddress, port).connect();

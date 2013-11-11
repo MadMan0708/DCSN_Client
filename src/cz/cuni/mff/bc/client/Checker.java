@@ -5,8 +5,17 @@
 package cz.cuni.mff.bc.client;
 
 import cz.cuni.mff.bc.api.main.IServer;
+import cz.cuni.mff.bc.api.main.ProjectUID;
 import cz.cuni.mff.bc.api.main.Task;
 import cz.cuni.mff.bc.api.main.TaskID;
+import cz.cuni.mff.bc.api.network.Downloader;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.attribute.FileAttribute;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +28,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.cojen.dirmi.Pipe;
 
 /**
  * Class checks regularly server tasks pool. Tasks are collected by client for
@@ -28,6 +38,7 @@ import java.util.logging.Logger;
  */
 public class Checker extends Thread {
 
+    private HashMap<ProjectUID, File> tempJars;
     private final long sleepThreadTime = 10000;
     private IServer remoteService;
     private int limit = 3;
@@ -36,19 +47,29 @@ public class Checker extends Thread {
     private Map<Future<Task>, IWorker> mapping;
     private String clientID;
     private boolean calculationInProgress;
-    private ClientCustomClassLoader clientCustomClassLoader;
+    //private ClientCustomClassLoader clientCustomClassLoader;
+    private ClientCustomCL clientCustClassLoader;
     private static final Logger LOG = Logger.getLogger(Checker.class.getName());
     private Handler loggingHandler;
+    private File tmpDir;
 
-    public Checker(IServer remoteService, String clientID, ClientCustomClassLoader clientCustomClassLoader, Handler loggingHandler) {
+    public Checker(IServer remoteService, String clientID, ClientCustomCL clientCustClassLoader, Handler loggingHandler) {
+        this.tempJars = new HashMap<>();
         this.executor = Executors.newFixedThreadPool(limit);
         this.futures = new ArrayList<>();
         this.remoteService = remoteService;
         this.mapping = new HashMap<>();
         this.clientID = clientID;
-        this.clientCustomClassLoader = clientCustomClassLoader;
+        //this.clientCustomClassLoader = clientCustomClassLoader;
+        this.clientCustClassLoader = clientCustClassLoader;
         this.loggingHandler = loggingHandler;
         LOG.addHandler(loggingHandler);
+        try {
+
+            tmpDir = Files.createTempDirectory("tasksJars").toFile();
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Can't create temp directory: {0}", e.getMessage());
+        }
     }
 
     /**
@@ -155,10 +176,39 @@ public class Checker extends Thread {
         return futures.size();
     }
 
+    private File downloadProjectJar(ProjectUID uid) throws IOException {
+        File tmp = File.createTempFile(uid.getClientID(), uid.getProjectID(), tmpDir);
+        try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(tmp));
+                Pipe pipe = remoteService.downloadProjectJar(uid, null)) {
+
+            int n;
+            byte[] buffer = new byte[8192];
+            while ((n = pipe.read(buffer)) > -1) {
+                out.write(buffer, 0, n);
+            }
+            pipe.close();
+            return tmp;
+        }
+
+    }
+
     private Task getTask() throws RemoteException {
         TaskID id = remoteService.getTaskIdBeforeCalculation(clientID);
         if (id != null) {
-            clientCustomClassLoader.setTaskID(id);
+            try {
+                if (!tempJars.containsKey(id.getProjectUID())) {
+                    File tmp = downloadProjectJar(id.getProjectUID());
+                    tempJars.put(id.getProjectUID(), tmp);
+                }
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Tmp file couldn't be created: {0}", e.getMessage());
+            }
+            //clientCustomClassLoader.setTaskID(id);
+            try {
+                clientCustClassLoader.addNewUrl(tempJars.get(id.getProjectUID()).toURI().toURL());
+            } catch (MalformedURLException e) {
+                LOG.log(Level.WARNING, "Path to temp file is incorrect: {0}", e.getMessage());
+            }
             return remoteService.getTask(clientID, id);
         } else {
             return null; // no more tasks to calculate on server

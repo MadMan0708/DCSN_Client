@@ -50,6 +50,7 @@ public class Client implements IConsole {
         logHandler.setLevel(Level.ALL);
 
         propMan = new PropertiesManager("client.config.properties", logHandler);
+        LOG.addHandler(logHandler);
     }
 
     public void initialize() {
@@ -72,17 +73,18 @@ public class Client implements IConsole {
     public void loadJar(Path jar, Path data) {
         try (JarInputStream jarStream = new JarInputStream(new FileInputStream(jar.toFile()))) {
             Manifest mf = jarStream.getManifest();
-            Attributes mainAttribs = mf.getMainAttributes();
-            String mainClazz = mainAttribs.getValue(Attributes.Name.MAIN_CLASS);
+            Attributes attr = mf.getMainAttributes();
+
+            String commanderName = attr.getValue("Main-Commander-Class");
             try {
                 ClassLoader cl = new URLClassLoader(new URL[]{jar.toUri().toURL()});
 
-                final Class<?> claxx = cl.loadClass(mainClazz);
-                final Commander commander = (Commander) claxx.newInstance();
+                final Class<?> clazz = cl.loadClass(commanderName);
+                final Commander commander = (Commander) clazz.newInstance();
                 new Thread() {
                     @Override
                     public void run() {
-                        commander.start(new ClientAPIWithLog(internalAPIWithLog.getRemoteService(), logHandler));
+                        commander.start(new ClientAPIWithLog(internalAPIWithLog.getRemoteService(), clientID, logHandler));
                     }
                 }.start();
 
@@ -363,7 +365,7 @@ public class Client implements IConsole {
                     if (ready) {
                         internalAPIWithLog = new InternalAPIWithLog(getServerAddressString(), serverPort, clientID, logHandler);
                         internalAPIWithLog.connect();
-                        clientAPIWithLog = new ClientAPIWithLog(internalAPIWithLog.getRemoteService(), logHandler);
+                        clientAPIWithLog = new ClientAPIWithLog(internalAPIWithLog.getRemoteService(), clientID, logHandler);
                     }
                 } else {
                     LOG.log(Level.INFO, "Command has no parameters");
@@ -379,15 +381,14 @@ public class Client implements IConsole {
                 break;
             }
             case "upload": {
-                if (checkParamNum(3, cmd)) {
-                    Path path = Paths.get(cmd[1]);
-                    path = path.toAbsolutePath();
-                    clientAPIWithLog.uploadProject(path, cmd[2], Integer.parseInt(cmd[3]));
+                if (checkParamNum(2, cmd)) {
+                    Path projectJar = Paths.get(cmd[1]).toAbsolutePath();
+                    Path projectData = Paths.get(cmd[2]).toAbsolutePath();
+                    clientAPIWithLog.uploadProject(projectJar, projectData);
                 } else {
-                    LOG.log(Level.INFO, "Expected parameters: 3");
-                    LOG.log(Level.INFO, "1: Path to project file");
-                    LOG.log(Level.INFO, "2: Project name");
-                    LOG.log(Level.INFO, "3: Project priority");
+                    LOG.log(Level.INFO, "Expected parameters: 2");
+                    LOG.log(Level.INFO, "1: Path to project jar");
+                    LOG.log(Level.INFO, "2: Path to project data");
                 }
                 break;
             }

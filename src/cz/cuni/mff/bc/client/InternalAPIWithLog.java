@@ -33,6 +33,10 @@ public class InternalAPIWithLog {
         LOG.addHandler(logHandler);
     }
 
+    public String getClientName() {
+        return clientName;
+    }
+
     public IServer getRemoteService() {
         return internalAPI.getRemoteService();
     }
