@@ -53,7 +53,7 @@ public class InternalAPI {
                     informServer();
                 }
             }
-        }, 0, informPeriod * 1000);
+        }, 0, informPeriod);
 
     }
 

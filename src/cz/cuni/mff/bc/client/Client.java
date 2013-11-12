@@ -70,7 +70,7 @@ public class Client implements IConsole {
         }
     }
 
-    public void loadJar(Path jar, Path data) {
+    public void loadJar(Path jar) {
         try (JarInputStream jarStream = new JarInputStream(new FileInputStream(jar.toFile()))) {
             Manifest mf = jarStream.getManifest();
             Attributes attr = mf.getMainAttributes();
@@ -89,10 +89,10 @@ public class Client implements IConsole {
                 }.start();
 
             } catch (InstantiationException | MalformedURLException | ClassNotFoundException | IllegalAccessException | SecurityException e) {
-                // logger.log(e.toString(), ELoggerMessages.ERROR);
+                LOG.log(Level.WARNING, e.toString());
             }
         } catch (IOException e) {
-            // logger.log(e.toString(), ELoggerMessages.ERROR);
+            LOG.log(Level.WARNING, e.toString());
         }
     }
 
@@ -227,12 +227,16 @@ public class Client implements IConsole {
              }
              break;
              }*/
-            case "test": {
-                String jar = cmd[1];
-                String data = cmd[2];
-                LOG.log(Level.INFO, "Proccessing");
+            case "auto": {
+                if (checkParamNum(1, cmd)) {
+                    String jar = cmd[1];
+                    LOG.log(Level.INFO, "Startig automatic proccessing");
 
-                loadJar(Paths.get(jar), Paths.get(data));
+                    loadJar(Paths.get(jar));
+                } else {
+                    LOG.log(Level.INFO, "Expected parameters: 1");
+                    LOG.log(Level.INFO, "1: Path to project jar file");
+                }
             }
             break;
             case "getName": {
@@ -399,7 +403,7 @@ public class Client implements IConsole {
                     if (downloadDir == null) {
                         LOG.log(Level.WARNING, "Download dir has to be set before downloading project");
                     } else {
-                        clientAPIWithLog.download(cmd[1], downloadDir);
+                        clientAPIWithLog.download(cmd[1], new File(downloadDir, cmd[1] + ".zip"));
                     }
                 } else {
                     LOG.log(Level.INFO, "Expected parameters: 1");
@@ -473,7 +477,7 @@ public class Client implements IConsole {
                     clientAPIWithLog.isProjectReadyForDownload(cmd[1]);
                 } else {
                     LOG.log(Level.INFO, "Expected parameters: 1");
-                    LOG.log(Level.INFO, "1: Name of project which should be checkes if is ready for download");
+                    LOG.log(Level.INFO, "1: Name of project which should be checked if is ready for download");
                 }
                 break;
             }
