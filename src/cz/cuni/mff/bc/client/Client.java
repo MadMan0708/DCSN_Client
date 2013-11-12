@@ -71,6 +71,7 @@ public class Client implements IConsole {
     }
 
     public void loadJar(Path jar) {
+        final Path currentJar = jar;
         try (JarInputStream jarStream = new JarInputStream(new FileInputStream(jar.toFile()))) {
             Manifest mf = jarStream.getManifest();
             Attributes attr = mf.getMainAttributes();
@@ -84,7 +85,7 @@ public class Client implements IConsole {
                 new Thread() {
                     @Override
                     public void run() {
-                        commander.start(new ClientAPIWithLog(internalAPIWithLog.getRemoteService(), clientID, logHandler));
+                        commander.start(new ClientAPIWithLog(internalAPIWithLog.getRemoteService(), clientID, currentJar, logHandler));
                     }
                 }.start();
 
