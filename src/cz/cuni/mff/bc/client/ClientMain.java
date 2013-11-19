@@ -18,8 +18,10 @@ public class ClientMain {
     public static void main(String[] args) throws RemoteException {
 
         final Client client = new Client();
+
         client.startGUIConsole();
         client.initialize();
+
         if (System.console() != null) {
             client.startClassicConsole();
         }

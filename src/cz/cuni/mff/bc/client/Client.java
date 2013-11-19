@@ -98,7 +98,11 @@ public class Client implements IConsole {
     }
 
     private void exitClient() {
-        internalAPIWithLog.stopRecievingTasks();
+        if (internalAPIWithLog != null) {
+            if (internalAPIWithLog.isRecievingTasks()) {
+                internalAPIWithLog.stopRecievingTasks();
+            }
+        }
         System.exit(0);
     }
 

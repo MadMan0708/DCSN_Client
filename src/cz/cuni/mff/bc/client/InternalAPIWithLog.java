@@ -41,6 +41,10 @@ public class InternalAPIWithLog {
         return internalAPI.getRemoteService();
     }
 
+    public boolean isRecievingTasks() {
+        return internalAPI.isRecievingTasks();
+    }
+
     public void disconnect() {
         try {
             internalAPI.disconnect();

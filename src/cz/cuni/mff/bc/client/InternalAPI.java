@@ -56,6 +56,10 @@ public class InternalAPI {
         }, 0, informPeriod);
 
     }
+    
+    public boolean isRecievingTasks(){
+        return checker.isCalculationInProgress();
+    }
 
     private void sendInformMessage(InformMessage message) throws RemoteException {
         remoteService.sendInformMessage(clientName, message);
