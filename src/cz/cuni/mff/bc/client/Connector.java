@@ -22,7 +22,7 @@ import org.cojen.dirmi.Session;
  *
  * @author Jakub
  */
-public class InternalAPI {
+public class Connector {
 
     private Session remoteSession;
     private IServer remoteService;
@@ -33,9 +33,9 @@ public class InternalAPI {
     private Timer timer;
     private long informPeriod = 1000;
     private Handler logHandler;
-    private static final Logger LOG = Logger.getLogger(InternalAPI.class.getName());
+    private static final Logger LOG = Logger.getLogger(Connector.class.getName());
 
-    public InternalAPI(Handler logHandler) {
+    public Connector(Handler logHandler) {
         this.logHandler = logHandler;
         LOG.addHandler(logHandler);
     }
@@ -56,9 +56,13 @@ public class InternalAPI {
         }, 0, informPeriod);
 
     }
-    
-    public boolean isRecievingTasks(){
-        return checker.isCalculationInProgress();
+
+    public boolean isRecievingTasks() {
+        if (checker == null || !checker.isCalculationInProgress()) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private void sendInformMessage(InformMessage message) throws RemoteException {

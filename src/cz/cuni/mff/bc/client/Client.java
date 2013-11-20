@@ -8,8 +8,8 @@ import cz.cuni.mff.bc.client.misc.PropertiesManager;
 import cz.cuni.mff.bc.client.misc.IConsole;
 import cz.cuni.mff.bc.client.misc.GConsole;
 import cz.cuni.mff.bc.api.enums.ProjectState;
-import cz.cuni.mff.bc.api.main.ClientAPIWithLog;
 import cz.cuni.mff.bc.api.main.Commander;
+import cz.cuni.mff.bc.api.main.StandartRemoteProvider;
 import cz.cuni.mff.bc.client.logging.CustomFormater;
 import cz.cuni.mff.bc.client.logging.CustomHandler;
 import java.io.BufferedReader;
@@ -17,16 +17,22 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -36,37 +42,69 @@ public class Client implements IConsole {
 
     private PropertiesManager propMan;
     private String clientID;
-    private int[] serverAddress;
+    private String serverAddress;
     private int serverPort;
     private String downloadDir;
-    private ClientAPIWithLog clientAPIWithLog;
-    private InternalAPIWithLog internalAPIWithLog;
+    private StandartRemoteProvider standartRemoteProvider;
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(Client.class.getName());
     private Handler logHandler;
+    private Connector connector;
 
     public Client() {
         logHandler = new CustomHandler(new File("client.log"));
         logHandler.setFormatter(new CustomFormater());
         logHandler.setLevel(Level.ALL);
-
-        propMan = new PropertiesManager("client.config.properties", logHandler);
         LOG.addHandler(logHandler);
+        this.connector = new Connector(logHandler);
+        propMan = new PropertiesManager("client.config.properties", logHandler);
+    }
+
+    private boolean remoteProviderAvailable() {
+        if (standartRemoteProvider == null) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     public void initialize() {
-
-        clientID = propMan.getProperty("name");
-        if (propMan.getProperty("address") != null) {
-            setServerAddress(propMan.getProperty("address"));
+        if (propMan.getProperty("name") == null) {
+            setClientName(System.getProperty("user.name"));
+        } else {
+            clientID = propMan.getProperty("name");
         }
-        serverPort = Integer.parseInt(propMan.getProperty("port", "-1"));
-        downloadDir = propMan.getProperty("downloadDir");
 
-        if (downloadDir != null) {
-            File down = new File(downloadDir);
-            if (!down.exists()) {
-                down.mkdir();
+        if (propMan.getProperty("address") == null) {
+            try {
+                setServerAddress("localhost");
+            } catch (UnknownHostException e) {
+                // tested, can not entry to this part
             }
+        } else {
+            try {
+                setServerAddress(propMan.getProperty("address"));
+            } catch (UnknownHostException e) {
+                LOG.log(Level.WARNING, "INITIALIZING: Not correct host or IP address: {0}", e.getMessage());
+            }
+        }
+
+        if (propMan.getProperty("port") == null) {
+            setServerPort(1099);
+        } else {
+            int tmpPort = Integer.parseInt(propMan.getProperty("port"));
+            if (tmpPort != -1) {
+                try {
+                    setServerPort(tmpPort);
+                } catch (IllegalArgumentException e) {
+                    LOG.log(Level.WARNING, "INITIALIZING: Port number has to be between 1 - 65535");
+                }
+            }
+        }
+
+        if (propMan.getProperty("downloadDir") == null) {
+            setDownloadDir(System.getProperty("user.home") + File.separator + "DCSN_downloaded");
+        } else {
+            setDownloadDir(propMan.getProperty("downloadDir"));
         }
     }
 
@@ -85,7 +123,7 @@ public class Client implements IConsole {
                 new Thread() {
                     @Override
                     public void run() {
-                        commander.start(new ClientAPIWithLog(internalAPIWithLog.getRemoteService(), clientID, currentJar, logHandler));
+                        commander.start(new StandartRemoteProvider(connector.getRemoteService(), clientID, currentJar, logHandler));
                     }
                 }.start();
 
@@ -98,64 +136,89 @@ public class Client implements IConsole {
     }
 
     private void exitClient() {
-        if (internalAPIWithLog != null) {
-            if (internalAPIWithLog.isRecievingTasks()) {
-                internalAPIWithLog.stopRecievingTasks();
+        if (connector != null) {
+            if (connector.isRecievingTasks()) {
+                stopRecievingTasks();
             }
         }
         System.exit(0);
     }
 
-    private void setServerAddress(String serverIPAddress) {
-        String[] ipStr = serverIPAddress.split("\\.");
-        int[] ipByte = new int[4];
-        for (int i = 0; i < 4; i++) {
-            ipByte[i] = Integer.parseInt(ipStr[i]);
+    private void setServerIPPort(String connDetails) throws UnknownHostException, IllegalArgumentException {
+        String pattern = "^(?<IP>.*):(?<port>\\d+)$";
+        Pattern p = Pattern.compile(pattern);
+        Matcher m = p.matcher(connDetails);
+        if (m.find()) {
+            setServerAddress(m.group("IP"));
+            setServerPort(Integer.parseInt(m.group("port")));
+        } else {
+            setServerAddress(connDetails);
         }
-        this.serverAddress = ipByte;
     }
 
-    public int[] getServerAddress() {
-        return this.serverAddress;
-    }
-
-    public String getDownloadDir() {
-        return downloadDir;
-    }
-
-    private boolean setDownloadDir(String newDownloadDir) {
-        File f = new File(newDownloadDir);
-        if (f.exists() && f.isDirectory()) {
-            downloadDir = newDownloadDir;
+    private boolean validatePort(int port) {
+        if (port >= 1 && port <= 65535) {
             return true;
         } else {
-            if (f.mkdirs()) {
-                downloadDir = newDownloadDir;
-                return true;
-            } else {
-                return false;
-            }
+            return false;
         }
     }
 
-    public String getServerAddressString() {
-        int[] addr = getServerAddress();
-        return addr[0] + "." + addr[1] + "." + addr[2] + "." + addr[3];
-    }
-
-    public void setServerPort(int port) {
-        this.serverPort = port;
+    public void setServerPort(int port) throws IllegalArgumentException {
+        if (validatePort(port)) {
+            this.serverPort = port;
+            LOG.log(Level.INFO, "Server port is now set to: {0}", serverPort);
+            propMan.setProperty("port", serverPort + "");
+        } else {
+            throw new IllegalArgumentException();
+        }
     }
 
     public int getServerPort() {
         return this.serverPort;
     }
 
-    public void setClientID(String newClientID) {
-        clientID = newClientID;
+    private void setServerAddress(String serverIPAddress) throws UnknownHostException {
+        serverAddress = InetAddress.getByName(serverIPAddress).getHostAddress();
+        LOG.log(Level.INFO, "Server address is now set to: {0}", serverAddress);
+        propMan.setProperty("address", serverAddress);
     }
 
-    public String getClientID() {
+    public String getServerAddress() {
+        return serverAddress.toString();
+    }
+
+    public String getDownloadDir() {
+        return downloadDir;
+    }
+
+    private boolean setDownloadDir(String dir) {
+        File f = new File(dir);
+        if (f.exists() && f.isDirectory()) {
+            downloadDir = f.getAbsolutePath();
+            LOG.log(Level.INFO, "Download dir is set to: {0}", downloadDir);
+            propMan.setProperty("downloadDir", downloadDir);
+            return true;
+        } else {
+            if (f.mkdirs()) {
+                downloadDir = f.getAbsolutePath();
+                LOG.log(Level.INFO, "Download dir is set to: {0}", downloadDir);
+                propMan.setProperty("downloadDir", downloadDir);
+                return true;
+            } else {
+                LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
+                return false;
+            }
+        }
+    }
+
+    public void setClientName(String newClientID) {
+        clientID = newClientID;
+        LOG.log(Level.INFO, "Client ID is now set to: {0}", clientID);
+        propMan.setProperty("name", clientID);
+    }
+
+    public String getClientName() {
         return clientID;
     }
 
@@ -180,7 +243,7 @@ public class Client implements IConsole {
         if (serverAddress == null) {
             LOG.log(Level.INFO, "Server adress is not set yet!");
         } else {
-            LOG.log(Level.INFO, "Server address is set to : {0}", getServerAddressString());
+            LOG.log(Level.INFO, "Server address is set to : {0}", serverAddress);
         }
     }
 
@@ -197,6 +260,46 @@ public class Client implements IConsole {
             LOG.log(Level.INFO, "Download dir is not set yet!");
         } else {
             LOG.log(Level.INFO, "Download dir is set to : {0}", downloadDir);
+        }
+    }
+
+    public void disconnect() {
+        try {
+            connector.disconnect();
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Disconnecting unsuccessful due to network erro:{0}", e.getMessage());
+        }
+    }
+
+    public void connect() {
+        try {
+            if (connector.connect(serverAddress, serverPort, clientID)) {
+                LOG.log(Level.INFO, "Connected to the server {0}:{1} with client ID {2}", new Object[]{serverAddress, serverPort, clientID});
+            } else {
+                LOG.log(Level.INFO, "Client ID \"{0}\" is already in the system ", clientID);
+            }
+        } catch (RemoteException e) {
+            LOG.log(Level.WARNING, "Problem during creating session: {0}", e.getMessage());
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Connection problem: {0}", e.getMessage());
+        }
+    }
+
+    public void startRecievingTasks() {
+        try {
+            LOG.log(Level.INFO, "Client is now participating in task computation");
+            connector.startRecievingTasks();
+        } catch (RemoteException e) {
+            LOG.log(Level.WARNING, "Computation couldn''t start due to network error: {0}", e.getMessage());
+        }
+    }
+
+    private void stopRecievingTasks() {
+        try {
+            connector.stopRecievingTasks();
+            LOG.log(Level.INFO, "Client has stopped computation of tasks");
+        } catch (RemoteException e) {
+            LOG.log(Level.WARNING, "Computation couldn''t be stopped to network error: {0}", e.getMessage());
         }
     }
 
@@ -281,9 +384,13 @@ public class Client implements IConsole {
             }
             case "setServerAddress": {
                 if (checkParamNum(1, cmd)) {
-                    setServerAddress(cmd[1]);
-                    LOG.log(Level.INFO, "Server adress is now set to: {0}", getServerAddressString());
-                    propMan.setProperty("address", getServerAddressString());
+                    try {
+                        setServerIPPort(cmd[1]);
+                    } catch (UnknownHostException e) {
+                        LOG.log(Level.WARNING, "Not correct host or IP address: {0}", e.getMessage());
+                    } catch (IllegalArgumentException e) {
+                        LOG.log(Level.WARNING, "Port number has to be between 1 - 65535");
+                    }
                 } else {
                     LOG.log(Level.INFO, "Expected parameters: 1");
                     LOG.log(Level.INFO, "1: Server new IP address");
@@ -292,9 +399,11 @@ public class Client implements IConsole {
             }
             case "setServerPort": {
                 if (checkParamNum(1, cmd)) {
-                    setServerPort(Integer.parseInt(cmd[1]));
-                    LOG.log(Level.INFO, "Server port is now set to: {0}", serverPort);
-                    propMan.setProperty("port", serverPort + "");
+                    try {
+                        setServerPort(Integer.parseInt(cmd[1]));
+                    } catch (IllegalArgumentException e) {
+                        LOG.log(Level.WARNING, "Port number has to be between 1 - 65535");
+                    }
                 } else {
                     LOG.log(Level.INFO, "Expected parameters: 1");
                     LOG.log(Level.INFO, "1: Server new port");
@@ -312,16 +421,7 @@ public class Client implements IConsole {
             }
             case "setDownloadDir": {
                 if (checkParamNum(1, cmd)) {
-                    try {
-                        File f = new File(cmd[1]);
-                        if (!setDownloadDir(f.getCanonicalPath())) {
-                            throw new IOException();
-                        }
-                        LOG.log(Level.INFO, "Download dir is set to: {0}", getDownloadDir());
-                        propMan.setProperty("downloadDir", getDownloadDir());
-                    } catch (IOException e) {
-                        LOG.log(Level.WARNING, "Path {0} is not correct path", cmd[1]);
-                    }
+                    setDownloadDir(cmd[1]);
                 } else {
                     LOG.log(Level.INFO, "Expected parameters: 1");
                     LOG.log(Level.INFO, "1: new download dir");
@@ -342,7 +442,7 @@ public class Client implements IConsole {
             }
             case "startCalculation": {
                 if (checkParamNum(0, cmd)) {
-                    internalAPIWithLog.startRecievingTasks();
+                    startRecievingTasks();
                 } else {
                     LOG.log(Level.INFO, "Command has no parameters");
                 }
@@ -350,7 +450,7 @@ public class Client implements IConsole {
             }
             case "endCalculation": {
                 if (checkParamNum(0, cmd)) {
-                    internalAPIWithLog.stopRecievingTasks();
+                    stopRecievingTasks();
                 } else {
                     LOG.log(Level.INFO, "Command has no parameters");
                 }
@@ -372,9 +472,8 @@ public class Client implements IConsole {
                         ready = false;
                     }
                     if (ready) {
-                        internalAPIWithLog = new InternalAPIWithLog(getServerAddressString(), serverPort, clientID, logHandler);
-                        internalAPIWithLog.connect();
-                        clientAPIWithLog = new ClientAPIWithLog(internalAPIWithLog.getRemoteService(), clientID, logHandler);
+                        connect();
+                        standartRemoteProvider = new StandartRemoteProvider(connector.getRemoteService(), clientID, logHandler);
                     }
                 } else {
                     LOG.log(Level.INFO, "Command has no parameters");
@@ -383,106 +482,132 @@ public class Client implements IConsole {
             }
             case "disconnect": {
                 if (checkParamNum(0, cmd)) {
-                    internalAPIWithLog.disconnect();
+                    disconnect();
                 } else {
                     LOG.log(Level.INFO, "Command has no parameters");
                 }
                 break;
             }
             case "upload": {
-                if (checkParamNum(2, cmd)) {
-                    Path projectJar = Paths.get(cmd[1]).toAbsolutePath();
-                    Path projectData = Paths.get(cmd[2]).toAbsolutePath();
-                    clientAPIWithLog.uploadProject(projectJar, projectData);
+                if (remoteProviderAvailable()) {
+                    if (checkParamNum(2, cmd)) {
+                        Path projectJar = Paths.get(cmd[1]).toAbsolutePath();
+                        Path projectData = Paths.get(cmd[2]).toAbsolutePath();
+                        standartRemoteProvider.uploadProject(projectJar, projectData);
+                    } else {
+                        LOG.log(Level.INFO, "Expected parameters: 2");
+                        LOG.log(Level.INFO, "1: Path to project jar");
+                        LOG.log(Level.INFO, "2: Path to project data");
+                    }
                 } else {
-                    LOG.log(Level.INFO, "Expected parameters: 2");
-                    LOG.log(Level.INFO, "1: Path to project jar");
-                    LOG.log(Level.INFO, "2: Path to project data");
+                    LOG.log(Level.WARNING, "Not connected");
                 }
                 break;
             }
-
-
             case "download": {
-                if (checkParamNum(1, cmd)) {
-                    if (downloadDir == null) {
-                        LOG.log(Level.WARNING, "Download dir has to be set before downloading project");
+                if (remoteProviderAvailable()) {
+                    if (checkParamNum(1, cmd)) {
+                        if (downloadDir == null) {
+                            LOG.log(Level.WARNING, "Download dir has to be set before downloading project");
+                        } else {
+                            standartRemoteProvider.download(cmd[1], new File(downloadDir, cmd[1] + ".zip"));
+                        }
                     } else {
-                        clientAPIWithLog.download(cmd[1], new File(downloadDir, cmd[1] + ".zip"));
+                        LOG.log(Level.INFO, "Expected parameters: 1");
+                        LOG.log(Level.INFO, "1: Project name");
                     }
                 } else {
-                    LOG.log(Level.INFO, "Expected parameters: 1");
-                    LOG.log(Level.INFO, "1: Project name");
+                    LOG.log(Level.WARNING, "Not connected");
                 }
                 break;
             }
 
 
             case "list": {
-                if (checkParamNum(1, cmd)) {
-                    switch (cmd[1]) {
-                        case "all":
-                            clientAPIWithLog.printAllProjects();
-                            break;
-                        case "active":
-                            clientAPIWithLog.printProjects(ProjectState.ACTIVE);
-                            break;
-                        case "paused":
-                            clientAPIWithLog.printProjects(ProjectState.PAUSED);
-                            break;
-                        case "completed":
-                            clientAPIWithLog.printProjects(ProjectState.COMPLETED);
-                            break;
-                        default:
-                            LOG.log(Level.INFO, "states which can listed are: all, completed, paused, active");
+                if (remoteProviderAvailable()) {
+                    if (checkParamNum(1, cmd)) {
+
+                        switch (cmd[1]) {
+                            case "all":
+                                standartRemoteProvider.printAllProjects();
+                                break;
+                            case "active":
+                                standartRemoteProvider.printProjects(ProjectState.ACTIVE);
+                                break;
+                            case "paused":
+                                standartRemoteProvider.printProjects(ProjectState.PAUSED);
+                                break;
+                            case "completed":
+                                standartRemoteProvider.printProjects(ProjectState.COMPLETED);
+                                break;
+                            default:
+                                LOG.log(Level.INFO, "states which can listed are: all, completed, paused, active");
+                        }
+                    } else {
+                        LOG.log(Level.INFO, "Expected parameters: 1");
+                        LOG.log(Level.INFO, "1: Type of projects - all, completed, paused, active");
                     }
                 } else {
-                    LOG.log(Level.INFO, "Expected parameters: 1");
-                    LOG.log(Level.INFO, "1: Type of projects - all, completed, paused, active");
+                    LOG.log(Level.WARNING, "Not connected");
                 }
                 break;
             }
 
 
             case "pause": {
-                if (checkParamNum(1, cmd)) {
-                    clientAPIWithLog.pauseProject(cmd[1]);
+                if (remoteProviderAvailable()) {
+                    if (checkParamNum(1, cmd)) {
+                        standartRemoteProvider.pauseProject(cmd[1]);
+                    } else {
+                        LOG.log(Level.INFO, "Expected parameters: 1");
+                        LOG.log(Level.INFO, "1: Name of project which should be paused");
+                    }
                 } else {
-                    LOG.log(Level.INFO, "Expected parameters: 1");
-                    LOG.log(Level.INFO, "1: Name of project which should be paused");
+                    LOG.log(Level.WARNING, "Not connected");
                 }
                 break;
             }
 
             case "unpause": {
-                if (checkParamNum(1, cmd)) {
-                    clientAPIWithLog.unpauseProject(cmd[1]);
+                if (remoteProviderAvailable()) {
+                    if (checkParamNum(1, cmd)) {
+                        standartRemoteProvider.unpauseProject(cmd[1]);
+                    } else {
+                        LOG.log(Level.INFO, "Expected parameters: 1");
+                        LOG.log(Level.INFO, "1: Name of project which should be unpaused");
+                    }
                 } else {
-                    LOG.log(Level.INFO, "Expected parameters: 1");
-                    LOG.log(Level.INFO, "1: Name of project which should be unpaused");
+                    LOG.log(Level.WARNING, "Not connected");
                 }
                 break;
             }
 
 
             case "cancel": {
-                if (checkParamNum(1, cmd)) {
-                    clientAPIWithLog.cancelProject(cmd[1]);
+                if (remoteProviderAvailable()) {
+                    if (checkParamNum(1, cmd)) {
+                        standartRemoteProvider.cancelProject(cmd[1]);
+                    } else {
+                        LOG.log(Level.INFO, "Expected parameters: 1");
+                        LOG.log(Level.INFO, "1: Name of project which should be canceled");
+                    }
                 } else {
-                    LOG.log(Level.INFO, "Expected parameters: 1");
-                    LOG.log(Level.INFO, "1: Name of project which should be canceled");
+                    LOG.log(Level.WARNING, "Not connected");
                 }
                 break;
             }
 
 
             case "downloadReady": {
-
-                if (checkParamNum(1, cmd)) {
-                    clientAPIWithLog.isProjectReadyForDownload(cmd[1]);
+                if (remoteProviderAvailable()) {
+                    if (checkParamNum(1, cmd)) {
+                        standartRemoteProvider.isProjectReadyForDownload(cmd[1]);
+                    } else {
+                        LOG.log(Level.INFO, "Expected parameters: 1");
+                        LOG.log(Level.INFO, "1: Name of project which should be checked if is ready for download");
+                    }
                 } else {
-                    LOG.log(Level.INFO, "Expected parameters: 1");
-                    LOG.log(Level.INFO, "1: Name of project which should be checked if is ready for download");
+                    LOG.log(Level.WARNING, "Not connected");
                 }
                 break;
             }
