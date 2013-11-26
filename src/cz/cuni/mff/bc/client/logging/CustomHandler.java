@@ -4,13 +4,7 @@
  */
 package cz.cuni.mff.bc.client.logging;
 
-
-import cz.cuni.mff.bc.client.misc.GConsole;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 
@@ -19,32 +13,29 @@ import java.util.logging.LogRecord;
  * @author Jakub
  */
 public class CustomHandler extends Handler {
-
-    private File log;
-
-    public CustomHandler(File log) {
-        this.log = log;
+    
+    private ArrayList<ILogTarget> targets = new ArrayList<>();
+    
+    public void addLogTarget(ILogTarget target) {
+        targets.add(target);
     }
 
-    private void logToFile(String msg) {
-        try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(log, true)))) {
-            pw.println(msg);
-        } catch (IOException e) {
-            GConsole.printToLog("Could't write to log file: " + msg + ": " + e.getMessage());
-        }
+    public void deleteLogTarger(ILogTarget target) {
+        targets.remove(target);
     }
 
     @Override
     public void publish(LogRecord record) {
-        logToFile(getFormatter().format(record));
-        GConsole.printToLog(getFormatter().format(record));
+        for (ILogTarget iLogTarget : targets) {
+            iLogTarget.log(getFormatter().format(record));
+        }
     }
-
+    
     @Override
     public void flush() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
+    
     @Override
     public void close() throws SecurityException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.

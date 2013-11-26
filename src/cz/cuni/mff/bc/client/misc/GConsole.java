@@ -20,38 +20,39 @@ import com.googlecode.lanterna.input.Key;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.TerminalSize;
 import com.googlecode.lanterna.terminal.swing.SwingTerminal;
-import java.io.InputStream;
+import cz.cuni.mff.bc.client.logging.ILogTarget;
+import java.awt.event.WindowListener;
 import java.util.LinkedList;
 
 /**
  *
  * @author Jakub
  */
-public class GConsole extends Thread {
+public class GConsole extends Thread implements ILogTarget {
 
+    private WindowListener listener;
     private String inputDeviceType;
-    private static SwingTerminal terminal;
-    private static Screen screen;
-    private static GUIScreen GUI;
-    private static Panel mainPanel;
-    private static Panel inputPanel;
-    private static Panel historyPanel;
-    private static Panel logPanel;
-    private static TextBox input;
-    private static TextArea log;
-    private static TextArea history;
-    private static InputStream in;
+    private SwingTerminal terminal;
+    private Screen screen;
+    private GUIScreen GUI;
+    private Panel mainPanel;
+    private Panel inputPanel;
+    private Panel historyPanel;
+    private Panel logPanel;
+    private TextBox input;
+    private TextArea log;
+    private TextArea history;
     private IConsole node;
     Window mainWindow;
-    private static int position = -1;
-    private static final int inputHistoryCapacity = 10;
-    private static LinkedList<String> hist = new LinkedList<>();
+    private int position = -1;
+    private final int inputHistoryCapacity = 10;
+    private LinkedList<String> hist = new LinkedList<>();
 
-    private static void restartHist() {
+    private void restartHist() {
         position = -1;
     }
 
-    private static String nextInHist() {
+    private String nextInHist() {
         if (hist.size() == 0) {
             return "";
         } else if (position == hist.size() - 1) {
@@ -62,7 +63,7 @@ public class GConsole extends Thread {
         }
     }
 
-    private static String previousInHist() {
+    private String previousInHist() {
         if (position == 0) {
             position = -1;
             return "";
@@ -74,26 +75,24 @@ public class GConsole extends Thread {
         }
     }
 
-    private static void addToHist(String msg) {
+    private void addToHist(String msg) {
         if (hist.size() >= inputHistoryCapacity) {
             hist.removeLast();
         }
         hist.addFirst(msg);
     }
 
-    public static synchronized void printToLog(String message) {
+    @Override
+    public synchronized void log(String message) {
         log.insertLine(0, " " + message + "  ");
     }
 
-    public static synchronized void printToHistory(String message) {
+    public synchronized void printToHistory(String message) {
         history.insertLine(0, " " + message + "  ");
     }
 
-    public static InputStream getInputStream() {
-        return in;
-    }
-
-    public GConsole(IConsole node, String type) {
+    public GConsole(IConsole node, String type, WindowListener listener) {
+        this.listener = listener;
         this.node = node;
         this.inputDeviceType = type;
         terminal = new SwingTerminal(new TerminalSize(100, 30));
@@ -133,13 +132,8 @@ public class GConsole extends Thread {
             return;
         }
         GUI.getScreen().startScreen();
-        terminal.getJFrame().addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                screen.stopScreen();
-                mainWindow.close();
-            }
-        });
+
+        terminal.getJFrame().addWindowListener(listener);
 
         input = new TextBox("") {
             @Override
@@ -186,8 +180,7 @@ public class GConsole extends Thread {
         mainPanel.addShortcut(Key.Kind.Escape, new Action() {
             @Override
             public void doAction() {
-                screen.stopScreen();
-                mainWindow.close();
+                listener.windowClosing(null);
             }
         });
 

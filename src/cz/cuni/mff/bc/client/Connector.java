@@ -41,20 +41,23 @@ public class Connector {
     }
 
     public void startRecievingTasks() throws RemoteException {
-        checker = new Checker(remoteService, clientName, cl, logHandler);
-        checker.setCalculationState(true);
-        checker.start();
-        sendInformMessage(InformMessage.CALCULATION_STARTED);
-        timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if (checker.isCalculationInProgress()) {
-                    informServer();
+        if (remoteSession != null) {
+            checker = new Checker(remoteService, clientName, cl, logHandler);
+            checker.setCalculationState(true);
+            checker.start();
+            sendInformMessage(InformMessage.CALCULATION_STARTED);
+            timer = new Timer();
+            timer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    if (checker.isCalculationInProgress()) {
+                        informServer();
+                    }
                 }
-            }
-        }, 0, informPeriod);
-
+            }, 0, informPeriod);
+        } else {
+            throw new RemoteException();
+        }
     }
 
     public boolean isRecievingTasks() {
@@ -92,6 +95,7 @@ public class Connector {
 
     public void disconnect() throws IOException {
         remoteSession.close();
+        env.close();
     }
 
     public void stopRecievingTasks() throws RemoteException {
