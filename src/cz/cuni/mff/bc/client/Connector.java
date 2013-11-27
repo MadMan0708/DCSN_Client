@@ -32,17 +32,11 @@ public class Connector {
     private Checker checker;
     private Timer timer;
     private long informPeriod = 1000;
-    private Handler logHandler;
-    private static final Logger LOG = Logger.getLogger(Connector.class.getName());
-
-    public Connector(Handler logHandler) {
-        this.logHandler = logHandler;
-        LOG.addHandler(logHandler);
-    }
+    private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
     public void startRecievingTasks() throws RemoteException {
         if (remoteSession != null) {
-            checker = new Checker(remoteService, clientName, cl, logHandler);
+            checker = new Checker(remoteService, clientName, cl);
             checker.setCalculationState(true);
             checker.start();
             sendInformMessage(InformMessage.CALCULATION_STARTED);

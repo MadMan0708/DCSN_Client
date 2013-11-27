@@ -25,6 +25,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
@@ -49,6 +50,7 @@ public class Client implements IConsole {
     private String serverAddress;
     private int serverPort;
     private String downloadDir;
+    private String uploadDir;
     private StandartRemoteProvider standartRemoteProvider;
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(Client.class.getName());
     private CustomHandler logHandler;
@@ -63,13 +65,9 @@ public class Client implements IConsole {
         logHandler.setLevel(Level.ALL);
         logHandler.addLogTarget(new FileLogger(new File("client.log")));
         LOG.addHandler(logHandler);
-        connector = new Connector(logHandler);
+        connector = new Connector();
         propMan = new PropertiesManager("client.config.properties", logHandler);
         commands = new ClientCommands(this);
-    }
-
-    public Handler getLogHandler() {
-        return logHandler;
     }
 
     public StandartRemoteProvider getRemoteProvider() {
@@ -108,6 +106,10 @@ public class Client implements IConsole {
         setDownloadDir(System.getProperty("user.home") + File.separator + "DCSN_downloaded");
     }
 
+    private void setDefaultUploadDir() {
+        setUploadDir(System.getProperty("user.home") + File.separator + "DCSN_uploaded");
+    }
+
     public void initialize() {
         if (propMan.getProperty("name") == null) {
             setDefaulClientName();
@@ -144,7 +146,14 @@ public class Client implements IConsole {
             if (!setDownloadDir(propMan.getProperty("downloadDir"))) {
                 setDefaultDownloadDir();
             }
+        }
 
+        if (propMan.getProperty("uploadDir") == null) {
+            setDefaultUploadDir();
+        } else {
+            if (!setUploadDir(propMan.getProperty("uploadDir"))) {
+                setDefaultUploadDir();
+            }
         }
     }
 
@@ -163,7 +172,8 @@ public class Client implements IConsole {
                 f = executor.submit(new Runnable() {
                     @Override
                     public void run() {
-                        commander.start(new StandartRemoteProvider(connector.getRemoteService(), clientID, currentJar, logHandler));
+                        commander.start(new StandartRemoteProvider(connector.getRemoteService(), clientID,
+                                Paths.get(downloadDir), Paths.get(uploadDir), currentJar, LOG));
                     }
                 });
             } catch (InstantiationException | MalformedURLException | ClassNotFoundException | IllegalAccessException | SecurityException e) {
@@ -266,6 +276,26 @@ public class Client implements IConsole {
         }
     }
 
+    public boolean setUploadDir(String dir) {
+        File f = new File(dir);
+        if (f.exists() && f.isDirectory()) {
+            uploadDir = f.getAbsolutePath();
+            LOG.log(Level.INFO, "Upload dir is set to: {0}", uploadDir);
+            propMan.setProperty("uploadDir", uploadDir);
+            return true;
+        } else {
+            if (f.mkdirs()) {
+                uploadDir = f.getAbsolutePath();
+                LOG.log(Level.INFO, "Upload dir is set to: {0}", uploadDir);
+                propMan.setProperty("uploadDir", uploadDir);
+                return true;
+            } else {
+                LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
+                return false;
+            }
+        }
+    }
+
     public void setClientName(String newClientID) {
         clientID = newClientID;
         LOG.log(Level.INFO, "Client name is now set to: {0}", clientID);
@@ -276,36 +306,8 @@ public class Client implements IConsole {
         return clientID;
     }
 
-    public void printClientName() {
-        if (clientID == null) {
-            LOG.log(Level.INFO, "Client name is not set yet!");
-        } else {
-            LOG.log(Level.INFO, "Client name is set to: {0}", clientID);
-        }
-    }
-
-    public void printServerAddress() {
-        if (serverAddress == null) {
-            LOG.log(Level.INFO, "Server adress is not set yet!");
-        } else {
-            LOG.log(Level.INFO, "Server address is set to : {0}", serverAddress);
-        }
-    }
-
-    public void printServerPort() {
-        if (serverPort == -1) {
-            LOG.log(Level.INFO, "Server adress is not set yet!");
-        } else {
-            LOG.log(Level.INFO, "Server port is set to : {0}", serverPort);
-        }
-    }
-
-    public void printDownloadDir() {
-        if (downloadDir == null) {
-            LOG.log(Level.INFO, "Download dir is not set yet!");
-        } else {
-            LOG.log(Level.INFO, "Download dir is set to : {0}", downloadDir);
-        }
+    public String getUploadDir() {
+        return uploadDir;
     }
 
     public void disconnect() {
@@ -320,11 +322,8 @@ public class Client implements IConsole {
     public void connect() {
         try {
             if (connector.connect(serverAddress, serverPort, clientID)) {
-                // setting RemoteProvider
-                if (remoteProviderAvailable()) {
-                    standartRemoteProvider.removeLogHandler();
-                }
-                standartRemoteProvider = new StandartRemoteProvider(connector.getRemoteService(), clientID, logHandler);
+                standartRemoteProvider = new StandartRemoteProvider(connector.getRemoteService(), clientID,
+                        Paths.get(downloadDir), Paths.get(uploadDir), LOG);
                 LOG.log(Level.INFO, "Connected to the server {0}:{1} with client ID {2}", new Object[]{serverAddress, serverPort, clientID});
                 standartRemoteProvider.hasClientTasksInProgress();
             } else {

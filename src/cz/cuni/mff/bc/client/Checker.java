@@ -45,25 +45,19 @@ public class Checker extends Thread {
     private Map<Future<Task>, IWorker> mapping;
     private String clientID;
     private boolean calculationInProgress;
-    //private ClientCustomClassLoader clientCustomClassLoader;
     private ClientCustomCL clientCustClassLoader;
-    private static final Logger LOG = Logger.getLogger(Checker.class.getName());
-    private Handler loggingHandler;
+    private static final Logger LOG = Logger.getLogger(Client.class.getName());
     private File tmpDir;
 
-    public Checker(IServer remoteService, String clientID, ClientCustomCL clientCustClassLoader, Handler loggingHandler) {
+    public Checker(IServer remoteService, String clientID, ClientCustomCL clientCustClassLoader) {
         this.tempJars = new HashMap<>();
         this.executor = Executors.newFixedThreadPool(limit);
         this.futures = new ArrayList<>();
         this.remoteService = remoteService;
         this.mapping = new HashMap<>();
         this.clientID = clientID;
-        //this.clientCustomClassLoader = clientCustomClassLoader;
         this.clientCustClassLoader = clientCustClassLoader;
-        this.loggingHandler = loggingHandler;
-        LOG.addHandler(loggingHandler);
         try {
-
             tmpDir = Files.createTempDirectory("tasksJars").toFile();
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Can't create temp directory: {0}", e.getMessage());
@@ -129,7 +123,7 @@ public class Checker extends Thread {
             if (checkStates() < limit) {
                 try {
                     if ((tsk = getTask()) != null) { // Checking if there are tasks to calculate
-                        IWorker wrk = new Worker(tsk, loggingHandler);
+                        IWorker wrk = new Worker(tsk);
                         Future<Task> submit = executor.submit(wrk);
                         mapping.put(submit, wrk);
                         futures.add(submit);
@@ -201,7 +195,6 @@ public class Checker extends Thread {
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Tmp file couldn't be created: {0}", e.getMessage());
             }
-            //clientCustomClassLoader.setTaskID(id);
             try {
                 clientCustClassLoader.addNewUrl(tempJars.get(id.getProjectUID()).toURI().toURL());
             } catch (MalformedURLException e) {

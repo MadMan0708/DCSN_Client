@@ -7,7 +7,6 @@ package cz.cuni.mff.bc.client;
 import cz.cuni.mff.bc.api.enums.TaskState;
 import cz.cuni.mff.bc.api.main.Task;
 import cz.cuni.mff.bc.api.main.TaskID;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,7 +17,7 @@ import java.util.logging.Logger;
  */
 public class Worker implements IWorker {
 
-    private static final Logger LOG = Logger.getLogger(Worker.class.getName());
+    private static final Logger LOG = Logger.getLogger(Client.class.getName());
     private Task tsk;
 
     /**
@@ -26,17 +25,14 @@ public class Worker implements IWorker {
      *
      * @param tsk Task to be calculated
      */
-    public Worker(Task tsk, Handler loggingHandler) {
+    public Worker(Task tsk) {
         this.tsk = tsk;
-        LOG.addHandler(loggingHandler);
-
     }
 
     @Override
     public TaskID getCurrentTaskID() {
         return tsk.getUnicateID();
     }
-    
 
     @Override
     public Task call() throws Exception {

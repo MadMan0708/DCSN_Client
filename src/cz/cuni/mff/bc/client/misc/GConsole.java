@@ -18,9 +18,11 @@ import com.googlecode.lanterna.gui.layout.HorisontalLayout;
 import com.googlecode.lanterna.gui.layout.VerticalLayout;
 import com.googlecode.lanterna.input.Key;
 import com.googlecode.lanterna.screen.Screen;
+import com.googlecode.lanterna.terminal.Terminal;
 import com.googlecode.lanterna.terminal.TerminalSize;
 import com.googlecode.lanterna.terminal.swing.SwingTerminal;
 import cz.cuni.mff.bc.client.logging.ILogTarget;
+import java.awt.Dimension;
 import java.awt.event.WindowListener;
 import java.util.LinkedList;
 
@@ -96,13 +98,12 @@ public class GConsole extends Thread implements ILogTarget {
         this.node = node;
         this.inputDeviceType = type;
         terminal = new SwingTerminal(new TerminalSize(100, 30));
-
+     
         screen = new Screen(terminal);
         GUI = new GUIScreen(screen);
         mainWindow = new Window("DSCN: Distributed Computing in Small Networks");
         mainPanel = new Panel(new Border.Invisible(), Panel.Orientation.VERTICAL);
         mainPanel.setLayoutManager(new BorderLayout());
-
         inputPanel = new Panel("Input: ", new Border.Standard(), Panel.Orientation.HORISONTAL);
         inputPanel.setLayoutManager(new HorisontalLayout());
         historyPanel = new Panel("Input history: ", new Border.Standard(), Panel.Orientation.HORISONTAL);
@@ -114,6 +115,7 @@ public class GConsole extends Thread implements ILogTarget {
 
         history = new TextArea();
         history.removeLine(0);
+
 
     }
 
@@ -132,7 +134,6 @@ public class GConsole extends Thread implements ILogTarget {
             return;
         }
         GUI.getScreen().startScreen();
-
         terminal.getJFrame().addWindowListener(listener);
 
         input = new TextBox("") {
@@ -159,8 +160,15 @@ public class GConsole extends Thread implements ILogTarget {
                 }
             }
         };
-        input.setPreferredSize(new TerminalSize(50, 1));
+        GUI.getScreen().getTerminal().addResizeListener(new Terminal.ResizeListener() {
+            @Override
+            public void onResized(TerminalSize ts) {
 
+                input.setPreferredSize(new TerminalSize(ts.getColumns(), input.getPreferredSize().getRows()));
+                log.setPreferredSize(new TerminalSize(ts.getColumns(), log.getPreferredSize().getRows()));
+                history.setPreferredSize(new TerminalSize(ts.getColumns(), history.getPreferredSize().getRows()));
+            }
+        });
         inputPanel.addComponent(new Label(inputDeviceType + ">"));
         inputPanel.addComponent(input);
         historyPanel.addComponent(history);
@@ -168,11 +176,11 @@ public class GConsole extends Thread implements ILogTarget {
 
 
         TerminalSize size = GUI.getScreen().getTerminalSize();
+
         int logPanelRows = (int) Math.floor(((float) size.getRows() / (float) 100) * 25);
-        history.setMinimumSize(new TerminalSize(size.getColumns(), size.getRows() - logPanelRows - 1));
-        input.setPreferredSize(new TerminalSize(size.getColumns() - 8, 1));
-        log.setMaximumSize(new TerminalSize(size.getColumns(), logPanelRows));
-        log.setMinimumSize(new TerminalSize(size.getColumns(), logPanelRows));
+        history.setPreferredSize(new TerminalSize(size.getColumns(), size.getRows() - logPanelRows - 1));
+        input.setPreferredSize(new TerminalSize(screen.getTerminalSize().getColumns(), 1));
+        log.setPreferredSize(new TerminalSize(screen.getTerminalSize().getColumns(),logPanelRows));
         mainPanel.addComponent(inputPanel, BorderLayout.TOP);
         mainPanel.addComponent(logPanel, BorderLayout.BOTTOM);
         mainPanel.addComponent(historyPanel, BorderLayout.LEFT);
@@ -185,9 +193,19 @@ public class GConsole extends Thread implements ILogTarget {
         });
 
         mainWindow.addComponent(mainPanel, BorderLayout.CENTER);
-        //GUI.showWindow(mainWindow, GUIScreen.Position.FULL_SCREEN);
+terminal.getJFrame().setMinimumSize((new Dimension(600, 400)));
+        // GUI.showWindow(mainWindow, GUIScreen.Position.FULL_SCREEN);
+        // GUI.getScreen().stopScreen();
+        new Thread() {
+            public void run() {
+                
+                GUI.showWindow(mainWindow, GUIScreen.Position.FULL_SCREEN);
+
+            }
+        }.start();
+
+
+
         //GUI.getScreen().stopScreen();
-        GUI.showWindow(mainWindow, GUIScreen.Position.FULL_SCREEN);
-        GUI.getScreen().stopScreen();
     }
 }

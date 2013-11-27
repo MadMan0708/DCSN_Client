@@ -18,19 +18,17 @@ import java.util.logging.Logger;
  */
 public class ClientCommands {
 
-    private static final Logger LOG = Logger.getLogger(ClientCommands.class.getName());
+    private static final Logger LOG = Logger.getLogger(Client.class.getName());
     private Client client;
 
     public ClientCommands(Client client) {
         this.client = client;
-        LOG.addHandler(client.getLogHandler());
     }
 
     public static String[] parseCommand(String params) {
         return params.split("\\s+");
     }
 
-  
     public static boolean checkParamNum(int expected, String[] params) {
         if (expected == params.length) {
             return true;
@@ -48,9 +46,26 @@ public class ClientCommands {
         }
     }
 
+    public void getUploadDir(String[] params) {
+        if (checkParamNum(0, params)) {
+            LOG.log(Level.INFO, "Upload dir is set to : {0}", client.getUploadDir());
+        } else {
+            LOG.log(Level.INFO, "Command has no parameters");
+        }
+    }
+
+    public void setUploadDir(String[] params) {
+        if (checkParamNum(1, params)) {
+            client.setUploadDir(params[0]);
+        } else {
+            LOG.log(Level.INFO, "Expected parameters: 1");
+            LOG.log(Level.INFO, "1: new upload dir");
+        }
+    }
+
     public void getDownloadDir(String[] params) {
         if (checkParamNum(0, params)) {
-            client.printDownloadDir();
+            LOG.log(Level.INFO, "Download dir is set to : {0}", client.getDownloadDir());
         } else {
             LOG.log(Level.INFO, "Command has no parameters");
         }
@@ -73,7 +88,7 @@ public class ClientCommands {
 
     public void getServerAddress(String[] params) {
         if (checkParamNum(0, params)) {
-            client.printServerAddress();
+            LOG.log(Level.INFO, "Server address is set to : {0}", client.getServerAddress());
         } else {
             LOG.log(Level.INFO, "Command has no parameters");
         }
@@ -94,7 +109,7 @@ public class ClientCommands {
 
     public void getServerPort(String[] params) {
         if (checkParamNum(0, params)) {
-            client.printServerPort();
+            LOG.log(Level.INFO, "Server port is set to : {0}", client.getServerPort());
         } else {
             LOG.log(Level.INFO, "Command has no parameters");
         }
@@ -111,7 +126,7 @@ public class ClientCommands {
 
     public void getName(String[] params) {
         if (checkParamNum(0, params)) {
-            client.printClientName();
+            LOG.log(Level.INFO, "Client name is set to: {0}", client.getClientName());
         } else {
             LOG.log(Level.INFO, "Command has no parameters");
         }
@@ -119,10 +134,11 @@ public class ClientCommands {
 
     public void getInfo(String[] params) {
         if (checkParamNum(0, params)) {
-            client.printClientName();
-            client.printServerAddress();
-            client.printServerPort();
-            client.printDownloadDir();
+            getName(params);
+            getServerAddress(params);
+            getServerPort(params);
+            getDownloadDir(params);
+            getUploadDir(params);
         } else {
             LOG.log(Level.INFO, "Command has no parameters");
         }
@@ -184,7 +200,7 @@ public class ClientCommands {
     public void auto(String[] params) {
         if (checkParamNum(1, params)) {
             String jar = params[0];
-            LOG.log(Level.INFO, "Startig automatic proccessing");
+            LOG.log(Level.INFO, "Starting automatic proccessing");
             client.loadJar(Paths.get(jar));
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");

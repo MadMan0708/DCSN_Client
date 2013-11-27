@@ -4,7 +4,6 @@
  */
 package cz.cuni.mff.bc.client;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 
