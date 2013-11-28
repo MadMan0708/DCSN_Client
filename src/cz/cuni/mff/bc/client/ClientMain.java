@@ -4,7 +4,6 @@
  */
 package cz.cuni.mff.bc.client;
 
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 
 /**
@@ -32,7 +31,7 @@ public class ClientMain {
                     client.startClassicConsole();
                     client.initialize();
                     String pathToTask = args[0].substring(args[0].indexOf("=") + 1);
-                    client.autoMode(Paths.get(pathToTask));
+                    client.autoMode(pathToTask); 
                 }else{
                     System.err.println("Incorrect parameter");
                 }

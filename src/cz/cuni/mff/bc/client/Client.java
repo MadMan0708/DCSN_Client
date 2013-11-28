@@ -8,14 +8,20 @@ import cz.cuni.mff.bc.client.misc.PropertiesManager;
 import cz.cuni.mff.bc.client.misc.IConsole;
 import cz.cuni.mff.bc.client.misc.GConsole;
 import cz.cuni.mff.bc.api.main.Commander;
+import cz.cuni.mff.bc.api.main.CustomIO;
+import cz.cuni.mff.bc.api.main.JarAPI;
 import cz.cuni.mff.bc.api.main.StandartRemoteProvider;
 import cz.cuni.mff.bc.client.logging.CustomFormater;
 import cz.cuni.mff.bc.client.logging.CustomHandler;
 import cz.cuni.mff.bc.client.logging.FileLogger;
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,20 +30,26 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.naming.directory.InvalidAttributesException;
 
 /**
  *
@@ -156,8 +168,20 @@ public class Client implements IConsole {
             }
         }
     }
+    
+    public void createProjectFrom(Path jar, Path destination, String value) {
+        try {
+            JarAPI.createJarWithChangedAttributeValue(jar, destination, "Project-Name", value);
+            LOG.log(Level.INFO, "New project from file \"{0}\" has been created, with projec name: {1}", new Object[]{jar.toString(), value});
+        } catch (FileNotFoundException e) {
+            LOG.log(Level.WARNING, "Project file not exists on written path: {0}", e.toString());
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Project file could not be load: {0}", e.toString());
+        }
 
-    public Future<?> loadJar(Path jar) {
+    }
+
+    public Future<?> startAutoProccess(Path jar) {
         Future<?> f = null;
         final Path currentJar = jar;
         try (JarInputStream jarStream = new JarInputStream(new FileInputStream(jar.toFile()))) {
@@ -179,24 +203,47 @@ public class Client implements IConsole {
             } catch (InstantiationException | MalformedURLException | ClassNotFoundException | IllegalAccessException | SecurityException e) {
                 LOG.log(Level.WARNING, e.toString());
             }
+        } catch (FileNotFoundException e) {
+            LOG.log(Level.WARNING, "Project file not exists on written path: {0}", e.toString());
         } catch (IOException e) {
-            LOG.log(Level.WARNING, e.toString());
+            LOG.log(Level.WARNING, "Project file couldn't be load: {0}", e.toString());
         }
         return f;
     }
 
-    public void autoMode(Path jar) {
-        connect();
-        Future<?> f = loadJar(jar);
-        while (!f.isDone()) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ex) {
-                LOG.log(Level.SEVERE, null, ex);
-            }
+    /**
+     *
+     * @param pathToFile path to file in string
+     * @return if string contained file separator, return it's path, otherwise
+     * return path in default upload folder
+     * @throws IllegalArgumentException
+     */
+    public Path getUploadFileLocation(String pathToFile) throws IllegalArgumentException {
+        Path path = Paths.get(pathToFile);
+        if (!pathToFile.contains(File.separator)) {
+            return new File(getUploadDir(), path.toFile().getName()).toPath();
+        } else {
+            return path;
         }
-        disconnect();
-        exitClient();
+    }
+
+    public void autoMode(String pathTojar) {
+        try {
+            Path projectJar = getUploadFileLocation(pathTojar);
+            connect();
+            Future<?> f = startAutoProccess(projectJar);
+            while (!f.isDone()) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ex) {
+                    LOG.log(Level.SEVERE, null, ex);
+                }
+            }
+            disconnect();
+            exitClient();
+        } catch (IllegalArgumentException e) {
+            LOG.log(Level.WARNING, "Incorrect path");
+        }
     }
 
     public void exitClient() {
@@ -364,7 +411,8 @@ public class Client implements IConsole {
         String[] params = Arrays.copyOfRange(cmd, 1, cmd.length);
         try {
             Class<?> c = Class.forName("cz.cuni.mff.bc.client.ClientCommands");
-            Method method = c.getMethod(cmd[0], new Class[]{String[].class});
+            Method method = c.getMethod(cmd[0], new Class[]{String[].class
+            });
             method.invoke(commands, new Object[]{params});
         } catch (ClassNotFoundException e) {
             // will be never thrown

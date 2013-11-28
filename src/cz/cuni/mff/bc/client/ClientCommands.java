@@ -5,6 +5,7 @@
 package cz.cuni.mff.bc.client;
 
 import cz.cuni.mff.bc.api.enums.ProjectState;
+import cz.cuni.mff.bc.api.main.CustomIO;
 import java.io.File;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
@@ -34,6 +35,29 @@ public class ClientCommands {
             return true;
         } else {
             return false;
+        }
+    }
+
+    public void createProjectFrom(String[] params) {
+        if (checkParamNum(3, params)) {
+            try {
+                Path projectJar = client.getUploadFileLocation(params[0]);
+                Path destinationJar = client.getUploadFileLocation(params[1]);
+                if (CustomIO.getExtension(destinationJar.toFile()).equals("jar")) {
+                    client.createProjectFrom(projectJar, destinationJar, params[2]);
+                } else {
+                    LOG.log(Level.WARNING, "New project jar file has to have jar extension");
+                }
+
+
+            } catch (IllegalArgumentException e) {
+                LOG.log(Level.WARNING, "Incorrect path");
+            }
+        } else {
+            LOG.log(Level.INFO, "Expected parameters: 2");
+            LOG.log(Level.INFO, "1: Path to project jar file");
+            LOG.log(Level.INFO, "1: Path where new project will be created");
+            LOG.log(Level.INFO, "2: New project name");
         }
     }
 
@@ -144,6 +168,15 @@ public class ClientCommands {
         }
     }
 
+    public void printProjectInfo(String[] params) {
+        if (checkParamNum(1, params)) {
+            client.getStandartRemoteProvider().printProjectInfo(params[0]);
+        } else {
+            LOG.log(Level.INFO, "Expected parameters: 1");
+            LOG.log(Level.INFO, "1: Project name");
+        }
+    }
+
     public void startCalculation(String[] params) {
         if (checkParamNum(0, params)) {
             client.startRecievingTasks();
@@ -199,9 +232,13 @@ public class ClientCommands {
 
     public void auto(String[] params) {
         if (checkParamNum(1, params)) {
-            String jar = params[0];
             LOG.log(Level.INFO, "Starting automatic proccessing");
-            client.loadJar(Paths.get(jar));
+            try {
+                Path projectJar = client.getUploadFileLocation(params[0]);
+                client.startAutoProccess(projectJar);
+            } catch (IllegalArgumentException e) {
+                LOG.log(Level.WARNING, "Incorrect path");
+            }
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
             LOG.log(Level.INFO, "1: Path to project jar file");
@@ -292,9 +329,14 @@ public class ClientCommands {
     public void upload(String[] params) {
         if (client.remoteProviderAvailable()) {
             if (checkParamNum(2, params)) {
-                Path projectJar = Paths.get(params[0]).toAbsolutePath();
-                Path projectData = Paths.get(params[1]).toAbsolutePath();
-                client.getStandartRemoteProvider().uploadProject(projectJar, projectData);
+                try {
+                    Path projectJar = client.getUploadFileLocation(params[0]);
+                    Path projectData = client.getUploadFileLocation(params[1]);
+                    client.getStandartRemoteProvider().uploadProject(projectJar, projectData);
+                } catch (IllegalArgumentException e) {
+                    LOG.log(Level.WARNING, "Incorrect path: {0}", e.getMessage());
+                }
+
             } else {
                 LOG.log(Level.INFO, "Expected parameters: 2");
                 LOG.log(Level.INFO, "1: Path to project jar");

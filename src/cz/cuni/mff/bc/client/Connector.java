@@ -12,7 +12,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.cojen.dirmi.Environment;
