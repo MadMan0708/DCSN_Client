@@ -23,7 +23,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.cojen.dirmi.Pipe;
@@ -45,6 +44,7 @@ public class Checker extends Thread {
     private Map<Future<Task>, IWorker> mapping;
     private String clientID;
     private boolean calculationInProgress;
+    private boolean recievingTasks;
     private ClientCustomCL clientCustClassLoader;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
     private File tmpDir;
@@ -95,15 +95,19 @@ public class Checker extends Thread {
         return futures.remove(del);
     }
 
-    public void setCalculationState(boolean calculationInProgress) {
-        this.calculationInProgress = calculationInProgress;
+    public void stopCalculation() {
+        calculationInProgress = false;
     }
 
     public boolean isCalculationInProgress() {
         return calculationInProgress;
     }
 
-    public void endCalculation() {
+    public void stopRecievingTasks() {
+        recievingTasks = false;
+    }
+
+    public void terminateCurrentTasks() {
         executor.shutdown();
         for (Future<Task> future : futures) {
             LOG.log(Level.INFO, "Calculation of {0} has been canceled", mapping.get(future).getCurrentTaskID().toString());
@@ -116,30 +120,48 @@ public class Checker extends Thread {
         executor.shutdownNow();
     }
 
+    public void startCalculation() {
+        calculationInProgress = true;
+        recievingTasks = true;
+        start();
+    }
+
     @Override
     public void run() {
         Task tsk;
         while (calculationInProgress) {
-            if (checkStates() < limit) {
-                try {
-                    if ((tsk = getTask()) != null) { // Checking if there are tasks to calculate
-                        IWorker wrk = new Worker(tsk);
-                        Future<Task> submit = executor.submit(wrk);
-                        mapping.put(submit, wrk);
-                        futures.add(submit);
-                    } else { // no more tasks, sleep
-                        if (checkStates() == 0) { // check if all tasks has been sent to the server
-                            try {
-                                LOG.log(Level.INFO, "Checker thread is going to sleep, no tasks.");
-                                Checker.sleep(sleepThreadTime);
-                            } catch (InterruptedException e) {
-                                LOG.log(Level.CONFIG, "Checker thread has been interrupted");
+            if (recievingTasks) {
+                if (checkStates() < limit) {
+                    try {
+                        if ((tsk = getTask()) != null) { // Checking if there are tasks to calculate
+                            IWorker wrk = new Worker(tsk);
+                            Future<Task> submit = executor.submit(wrk);
+                            mapping.put(submit, wrk);
+                            futures.add(submit);
+                        } else { // no more tasks, sleep
+                            if (checkStates() == 0) { // check if all tasks has been sent to the server
+                                try {
+                                    LOG.log(Level.INFO, "Checker thread is going to sleep, no tasks.");
+                                    Checker.sleep(sleepThreadTime);
+                                } catch (InterruptedException e) {
+                                    LOG.log(Level.CONFIG, "Checker thread has been interrupted");
+                                }
                             }
                         }
+                    } catch (RemoteException e) {
+                        LOG.log(Level.WARNING, "Loading tasks from server: Task could not be obtained : {0}", e.getMessage());
+                        // Handle this exception
                     }
-                } catch (RemoteException e) {
-                    LOG.log(Level.WARNING, "Loading tasks from server: Task could not be obtained : {0}", e.getMessage());
-                    // Handle this exception
+                }
+            } else {
+                if (checkStates() == 0) {
+                    calculationInProgress = false;
+                } else {
+                    try {
+                        Checker.sleep(sleepThreadTime);
+                    } catch (InterruptedException e) {
+                        LOG.log(Level.CONFIG, "Waiting for computation of rest of the tasks");
+                    }
                 }
             }
         }

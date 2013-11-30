@@ -33,11 +33,10 @@ public class Connector {
     private long informPeriod = 1000;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
-    public void startRecievingTasks() throws RemoteException {
+    public void startCalculation() throws RemoteException {
         if (remoteSession != null) {
             checker = new Checker(remoteService, clientName, cl);
-            checker.setCalculationState(true);
-            checker.start();
+            checker.startCalculation();
             sendInformMessage(InformMessage.CALCULATION_STARTED);
             timer = new Timer();
             timer.scheduleAtFixedRate(new TimerTask() {
@@ -91,17 +90,21 @@ public class Connector {
         env.close();
     }
 
-    public void stopRecievingTasks() throws RemoteException {
-        checker.setCalculationState(false);
-        checker.endCalculation();
-        informServer();
-        sendInformMessage(InformMessage.CALCULATION_ENDED);
+    public void stopCalculation(boolean force) throws RemoteException {
+        if (force) {
+            checker.stopCalculation();
+            checker.terminateCurrentTasks();
+        } else {
+            checker.stopRecievingTasks();
+        }
     }
 
     private void informServer() {
         try {
+            if (!checker.isCalculationInProgress()) {
+                sendInformMessage(InformMessage.CALCULATION_ENDED);
+            }
             ArrayList<TaskID> taskToCancel = remoteService.calculatedTasks(clientName, checker.getTasksInCalculation());
-
             for (TaskID tsk : taskToCancel) {
                 if (checker.cancelTaskCalculation(tsk)) {
                     LOG.log(Level.INFO, "Task {0} is canceled by server purposes", tsk);

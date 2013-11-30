@@ -185,9 +185,9 @@ public class ClientCommands {
         }
     }
 
-    public void endCalculation(String[] params) {
+    public void stopCalculation(String[] params) {
         if (checkParamNum(0, params)) {
-            client.stopRecievingTasks();
+            client.stopRecievingTasks(false);
         } else {
             LOG.log(Level.INFO, "Command has no parameters");
         }

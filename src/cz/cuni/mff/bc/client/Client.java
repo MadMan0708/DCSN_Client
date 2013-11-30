@@ -8,20 +8,16 @@ import cz.cuni.mff.bc.client.misc.PropertiesManager;
 import cz.cuni.mff.bc.client.misc.IConsole;
 import cz.cuni.mff.bc.client.misc.GConsole;
 import cz.cuni.mff.bc.api.main.Commander;
-import cz.cuni.mff.bc.api.main.CustomIO;
 import cz.cuni.mff.bc.api.main.JarAPI;
 import cz.cuni.mff.bc.api.main.StandartRemoteProvider;
 import cz.cuni.mff.bc.client.logging.CustomFormater;
 import cz.cuni.mff.bc.client.logging.CustomHandler;
 import cz.cuni.mff.bc.client.logging.FileLogger;
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -30,26 +26,19 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
-import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.naming.directory.InvalidAttributesException;
 
 /**
  *
@@ -168,7 +157,7 @@ public class Client implements IConsole {
             }
         }
     }
-    
+
     public void createProjectFrom(Path jar, Path destination, String value) {
         try {
             JarAPI.createJarWithChangedAttributeValue(jar, destination, "Project-Name", value);
@@ -249,7 +238,7 @@ public class Client implements IConsole {
     public void exitClient() {
         if (connector != null) {
             if (connector.isRecievingTasks()) {
-                stopRecievingTasks();
+                stopRecievingTasks(true);
             }
         }
         System.exit(0);
@@ -385,20 +374,25 @@ public class Client implements IConsole {
 
     public void startRecievingTasks() {
         try {
-            connector.startRecievingTasks();
+            connector.startCalculation();
             LOG.log(Level.INFO, "Client is now participating in task computation");
         } catch (RemoteException e) {
             LOG.log(Level.WARNING, "Not Connected to the server.");
         }
     }
 
-    public void stopRecievingTasks() {
+    public void stopRecievingTasks(boolean force) {
         try {
             if (connector.isRecievingTasks()) {
-                connector.stopRecievingTasks();
-                LOG.log(Level.INFO, "Client has stopped computation of tasks");
+                connector.stopCalculation(force);
+                if (force) {
+                    LOG.log(Level.INFO, "Client has stopped computation of tasks");
+                } else {
+                    LOG.log(Level.INFO, "Client is finishing currently calculated tasks");
+                }
+
             } else {
-                LOG.log(Level.INFO, "Client is not participation in task computation");
+                LOG.log(Level.INFO, "Client is not participating in task computation");
             }
         } catch (RemoteException e) {
             LOG.log(Level.WARNING, "Problem during disconnection from server.");
