@@ -1,3 +1,33 @@
+28.11.2013
+ - default values for server address, port, download address and upload address
+ - BUG fixed: list all could be started without established connection to server, it shows message if no projects are on the server
+ - calculation could be started before established connection as well as various other commands, it is not able now. It user try to use these commands before connection, message is shown
+ - setServerAddress now takes IP address and hostname as parameter and checks it for correctness ( It solves the bug when application freezing when incorrect IP address was written), port can be added after colon. Like host|ip address:port
+ - connect take IP address and port as well. If it connects with these values, these values are stored to properties files. Otherwise it connects with values from properties file
+ - non-interactive mode added : program can be started without gui and program can be started with project jar parameter which will be calculated and application will close immediately after calculation is done
+ - upload dir added. If user writes only file names instead of paths to commands which loads jar files and data files, it will try to load these files from upload folder.
+ - classes renamed: ClienApiWithoutLog renamed to StandartRemoteProvider
+                    ClientApi renamed to RemoteProvider
+                    InternalAPI renamed to Connector
+                    InternalAPIWithLog deletead, as the code was moved to client class
+- method for getting information about one project was added - PrintProjectInfo
+- switch with command identification was replaced by class ClientCommands, commands are identified by Java Reflection API
+- method CreateProjectFrom implemented, it allows create project from previous project jar with new name
+- message is shown when user is logged to the system and has some projects in progress
+- user can not be connected if another user with same name is now in the system now
+- problem with closing application fixed, it closes java properly now
+- multiple lines to output fixed - it was problem with logging system, which was fixed
+- if client now writes the command stopCalculation, program will stop recieving new tasks but will finish it's current tasks. If client closes the application, the tasks calculation is cancelled immediately.
+- client GUI shrinking was fixed
+- problem with commands pause, resume and cancel was fixed, project can now be manipulated with by using these commands
+
+19.11.2013
+- library path made relatives
+
+12.11.2013
+- class loading system has changed. Now instead of one class, user upload jar file with classes needed for computation and classes needed for project preparation before it's uploaded and after it's downloaded
+
+
 4.11.2013
 - fix bug with classFormatException truncate error during automatic calculation
 - fix different time padding in log
