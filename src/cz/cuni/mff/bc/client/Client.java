@@ -21,8 +21,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
 import java.net.MalformedURLException;
+import java.net.NetworkInterface;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.UnknownHostException;
@@ -30,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -155,6 +160,73 @@ public class Client implements IConsole {
             if (!setUploadDir(propMan.getProperty("uploadDir"))) {
                 setDefaultUploadDir();
             }
+        }
+
+        searchForServer();
+    }
+
+    private void searchForServer() {
+        try {
+            DatagramSocket socket = new DatagramSocket();
+            socket.setBroadcast(true);
+
+            byte[] sendData = "DISCOVER_SERVER_REQUEST".getBytes();
+
+
+            try {
+                DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("255.255.255.255"), getServerPort());
+                socket.send(sendPacket);
+                LOG.log(Level.INFO, "Request packet sent to: 255.255.255.255 (DEFAULT)");
+            } catch (Exception e) {
+            }
+
+            // Broadcast the message over all the network interfaces
+            Enumeration interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = (NetworkInterface) interfaces.nextElement();
+
+                if (networkInterface.isLoopback() || !networkInterface.isUp()) {
+                    continue; // Don't want to broadcast to the loopback interface
+                }
+
+                for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
+                    InetAddress broadcast = interfaceAddress.getBroadcast();
+                    if (broadcast == null) {
+                        continue;
+                    }
+
+                    // Send the broadcast package!
+                    try {
+                        DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, broadcast, getServerPort());
+                        socket.send(sendPacket);
+                        LOG.log(Level.INFO, "Request packet sent to: {0}; Interface: {1}", new Object[]{broadcast.getHostAddress(), networkInterface.getDisplayName()});
+                    } catch (Exception e) {
+                    }
+
+                    
+                }
+            }
+
+            LOG.log(Level.INFO, "Done looping over all network interfaces. Now waiting for a reply!");
+
+            //Wait for a response
+            byte[] recvBuf = new byte[15000];
+            DatagramPacket receivePacket = new DatagramPacket(recvBuf, recvBuf.length);
+            socket.receive(receivePacket);
+
+            //We have a response
+            LOG.log(Level.INFO, "Broadcast response from server: {0}", receivePacket.getAddress().getHostAddress());
+            //Check if the message is correct
+            String message = new String(receivePacket.getData()).trim();
+            if (message.equals("DISCOVER_SERVER_RESPONSE")) {
+                 // now we have server ip address
+               commands.setServerAddress(new String[]{receivePacket.getAddress().toString()});
+                connect();
+            }
+            //Close the port!
+            socket.close();
+        } catch (IOException ex) {
+            LOG.log(Level.SEVERE, null, ex);
         }
     }
 

@@ -34,6 +34,22 @@ public class Worker implements IWorker {
         return tsk.getUnicateID();
     }
 
+    public static void startSecondJVM(Class<? extends Object> clazz, boolean redirectStream) throws Exception {
+        System.out.println(clazz.getCanonicalName());
+        String separator = System.getProperty("file.separator");
+        String jarName = "C";
+        String path = System.getProperty("java.home")
+                + separator + "bin" + separator + "java";
+        ProcessBuilder processBuilder =
+                new ProcessBuilder(path, "-jar",
+                jarName,
+                clazz.getCanonicalName());
+        processBuilder.redirectErrorStream(redirectStream);
+        Process process = processBuilder.start();
+        process.waitFor();
+        System.out.println("Fin");
+    }
+
     @Override
     public Task call() throws Exception {
         LOG.log(Level.INFO, "Task : {0} >> calculation started", tsk.getUnicateID());

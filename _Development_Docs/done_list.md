@@ -1,3 +1,6 @@
+28.12.2013
+ - broadcasting discovering of server implemented on client
+
 28.11.2013
  - default values for server address, port, download address and upload address
  - BUG fixed: list all could be started without established connection to server, it shows message if no projects are on the server
