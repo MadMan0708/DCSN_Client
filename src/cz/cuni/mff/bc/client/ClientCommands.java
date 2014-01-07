@@ -9,7 +9,6 @@ import cz.cuni.mff.bc.api.main.CustomIO;
 import java.io.File;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -151,6 +150,48 @@ public class ClientCommands {
     public void getName(String[] params) {
         if (checkParamNum(0, params)) {
             LOG.log(Level.INFO, "Client name is set to: {0}", client.getClientName());
+        } else {
+            LOG.log(Level.INFO, "Command has no parameters");
+        }
+    }
+
+    public void setMemory(String[] params) {
+        if (checkParamNum(1, params)) {
+            try {
+                client.setMemory(Integer.parseInt(params[0]));
+            } catch (NumberFormatException e) {
+                LOG.log(Level.WARNING, "Amount of memory allowed to use by tasks has to be positive integer");
+            }
+        } else {
+            LOG.log(Level.INFO, "Expected parameters: 1");
+            LOG.log(Level.INFO, "1: new memory limit for task computation");
+        }
+    }
+
+    public void getMemory(String[] params) {
+        if (checkParamNum(0, params)) {
+            LOG.log(Level.INFO, "Amount of memory allowed to use by tasks is set to: {0}", client.getMemory());
+        } else {
+            LOG.log(Level.INFO, "Command has no parameters");
+        }
+    }
+
+    public void setCores(String[] params) {
+        if (checkParamNum(1, params)) {
+            try {
+                client.setCores(Integer.parseInt(params[0]));
+            } catch (NumberFormatException e) {
+                LOG.log(Level.WARNING, "Number of cores allowed to use by tasks has to be positive integer");
+            }
+        } else {
+            LOG.log(Level.INFO, "Expected parameters: 1");
+            LOG.log(Level.INFO, "1: new limit for cores allowed to use by task computation");
+        }
+    }
+
+    public void getCores(String[] params) {
+        if (checkParamNum(0, params)) {
+            LOG.log(Level.INFO, "Number of cores allowed to use by tasks is set to: {0}", client.getCores());
         } else {
             LOG.log(Level.INFO, "Command has no parameters");
         }

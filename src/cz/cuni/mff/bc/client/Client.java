@@ -52,20 +52,17 @@ import java.util.regex.Pattern;
 public class Client implements IConsole {
 
     private PropertiesManager propMan;
-    private String clientID;
-    private String serverAddress;
-    private int serverPort;
-    private String downloadDir;
-    private String uploadDir;
     private StandartRemoteProvider standartRemoteProvider;
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(Client.class.getName());
     private CustomHandler logHandler;
     private Connector connector;
     private ClientCommands commands;
     private GConsole con;
+    private ClientParameters params;
     private ExecutorService executor = Executors.newCachedThreadPool();
 
     public Client() {
+        this.params = new ClientParameters();
         logHandler = new CustomHandler();
         logHandler.setFormatter(new CustomFormater());
         logHandler.setLevel(Level.ALL);
@@ -116,7 +113,37 @@ public class Client implements IConsole {
         setUploadDir(System.getProperty("user.home") + File.separator + "DCSN_uploaded");
     }
 
+    private void setDefaultCores() {
+        setCores(4);
+    }
+
+    private void setDefaultMemory() {
+        setMemory(125);
+    }
+
     public void initialize() {
+        if (propMan.getProperty("cores") == null) {
+            setDefaultCores();
+        } else {
+            try {
+                setCores(Integer.parseInt(propMan.getProperty("cores")));
+            } catch (NumberFormatException e) {
+                LOG.log(Level.WARNING, "INITIALIZING: Number of cores has to be positive integer");
+                setDefaultCores();
+            }
+        }
+
+        if (propMan.getProperty("memory") == null) {
+            setDefaultMemory();
+        } else {
+            try {
+                setMemory(Integer.parseInt(propMan.getProperty("memory")));
+            } catch (NumberFormatException e) {
+                LOG.log(Level.WARNING, "INITIALIZING: Amount of memory has to be positive integer");
+                setDefaultMemory();
+            }
+        }
+
         if (propMan.getProperty("name") == null) {
             setDefaulClientName();
         } else {
@@ -169,17 +196,13 @@ public class Client implements IConsole {
         try {
             DatagramSocket socket = new DatagramSocket();
             socket.setBroadcast(true);
-
             byte[] sendData = "DISCOVER_SERVER_REQUEST".getBytes();
-
-
             try {
                 DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("255.255.255.255"), getServerPort());
                 socket.send(sendPacket);
                 LOG.log(Level.INFO, "Request packet sent to: 255.255.255.255 (DEFAULT)");
             } catch (Exception e) {
             }
-
             // Broadcast the message over all the network interfaces
             Enumeration interfaces = NetworkInterface.getNetworkInterfaces();
             while (interfaces.hasMoreElements()) {
@@ -203,7 +226,7 @@ public class Client implements IConsole {
                     } catch (Exception e) {
                     }
 
-                    
+
                 }
             }
 
@@ -219,8 +242,8 @@ public class Client implements IConsole {
             //Check if the message is correct
             String message = new String(receivePacket.getData()).trim();
             if (message.equals("DISCOVER_SERVER_RESPONSE")) {
-                 // now we have server ip address
-               commands.setServerAddress(new String[]{receivePacket.getAddress().toString()});
+                // now we have server ip address
+                commands.setServerAddress(new String[]{receivePacket.getAddress().toString()});
                 connect();
             }
             //Close the port!
@@ -257,8 +280,8 @@ public class Client implements IConsole {
                 f = executor.submit(new Runnable() {
                     @Override
                     public void run() {
-                        commander.start(new StandartRemoteProvider(connector.getRemoteService(), clientID,
-                                Paths.get(downloadDir), Paths.get(uploadDir), currentJar, LOG));
+                        commander.start(new StandartRemoteProvider(connector.getRemoteService(), params.getClientName(),
+                                Paths.get(params.getDownloadDir()), Paths.get(params.getUploadDir()), currentJar, LOG));
                     }
                 });
             } catch (InstantiationException | MalformedURLException | ClassNotFoundException | IllegalAccessException | SecurityException e) {
@@ -338,44 +361,64 @@ public class Client implements IConsole {
 
     public void setServerPort(int port) throws IllegalArgumentException {
         if (validatePort(port)) {
-            this.serverPort = port;
-            LOG.log(Level.INFO, "Server port is now set to: {0}", serverPort);
-            propMan.setProperty("port", serverPort + "");
+            params.setServerPort(port);
+            LOG.log(Level.INFO, "Server port is now set to: {0}", params.getServerPort());
+            propMan.setProperty("port", params.getServerPort() + "");
         } else {
             throw new IllegalArgumentException();
         }
     }
 
     public int getServerPort() {
-        return this.serverPort;
+        return params.getServerPort();
+    }
+
+    public void setMemory(int memory) {
+        params.setMemory(memory);
+        LOG.log(Level.INFO, "Amount of memory allowed is now set to: {0}", memory);
+        propMan.setProperty("memory", memory + "");
+    }
+
+    public int getMemory() {
+        return params.getMemory();
+    }
+
+    public void setCores(int cores) {
+        params.setCores(cores);
+        LOG.log(Level.INFO, "Number of cores allowed is now set to: {0}", cores);
+        propMan.setProperty("memory", cores + "");
+    }
+
+    public int getCores() {
+        return params.getCores();
     }
 
     public void setServerAddress(String serverIPAddress) throws UnknownHostException {
-        serverAddress = InetAddress.getByName(serverIPAddress).getHostAddress();
-        LOG.log(Level.INFO, "Server address is now set to: {0}", serverAddress);
-        propMan.setProperty("address", serverAddress);
+        params.setServerAddress(InetAddress.getByName(serverIPAddress).getHostAddress());
+        LOG.log(Level.INFO, "Server address is now set to: {0}", params.getServerAddress());
+        propMan.setProperty("address", params.getServerAddress());
     }
 
     public String getServerAddress() {
-        return serverAddress.toString();
+        return params.getServerAddress();
     }
 
     public String getDownloadDir() {
-        return downloadDir;
+        return params.getDownloadDir();
     }
 
     public boolean setDownloadDir(String dir) {
         File f = new File(dir);
         if (f.exists() && f.isDirectory()) {
-            downloadDir = f.getAbsolutePath();
-            LOG.log(Level.INFO, "Download dir is set to: {0}", downloadDir);
-            propMan.setProperty("downloadDir", downloadDir);
+            params.setDownloadDir(f.getAbsolutePath());
+            LOG.log(Level.INFO, "Download dir is set to: {0}", params.getDownloadDir());
+            propMan.setProperty("downloadDir", params.getDownloadDir());
             return true;
         } else {
             if (f.mkdirs()) {
-                downloadDir = f.getAbsolutePath();
-                LOG.log(Level.INFO, "Download dir is set to: {0}", downloadDir);
-                propMan.setProperty("downloadDir", downloadDir);
+                params.setDownloadDir(f.getAbsolutePath());
+                LOG.log(Level.INFO, "Download dir is set to: {0}", params.getDownloadDir());
+                propMan.setProperty("downloadDir", params.getDownloadDir());
                 return true;
             } else {
                 LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
@@ -387,15 +430,15 @@ public class Client implements IConsole {
     public boolean setUploadDir(String dir) {
         File f = new File(dir);
         if (f.exists() && f.isDirectory()) {
-            uploadDir = f.getAbsolutePath();
-            LOG.log(Level.INFO, "Upload dir is set to: {0}", uploadDir);
-            propMan.setProperty("uploadDir", uploadDir);
+            params.setUploadDir(f.getAbsolutePath());
+            LOG.log(Level.INFO, "Upload dir is set to: {0}", params.getUploadDir());
+            propMan.setProperty("uploadDir", params.getUploadDir());
             return true;
         } else {
             if (f.mkdirs()) {
-                uploadDir = f.getAbsolutePath();
-                LOG.log(Level.INFO, "Upload dir is set to: {0}", uploadDir);
-                propMan.setProperty("uploadDir", uploadDir);
+                params.setUploadDir(f.getAbsolutePath());
+                LOG.log(Level.INFO, "Upload dir is set to: {0}", params.getUploadDir());
+                propMan.setProperty("uploadDir", params.getUploadDir());
                 return true;
             } else {
                 LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
@@ -404,18 +447,18 @@ public class Client implements IConsole {
         }
     }
 
-    public void setClientName(String newClientID) {
-        clientID = newClientID;
-        LOG.log(Level.INFO, "Client name is now set to: {0}", clientID);
-        propMan.setProperty("name", clientID);
+    public void setClientName(String clientName) {
+        params.setClientName(clientName);
+        LOG.log(Level.INFO, "Client name is now set to: {0}", clientName);
+        propMan.setProperty("name", clientName);
     }
 
     public String getClientName() {
-        return clientID;
+        return params.getClientName();
     }
 
     public String getUploadDir() {
-        return uploadDir;
+        return params.getUploadDir();
     }
 
     public void disconnect() {
@@ -429,13 +472,13 @@ public class Client implements IConsole {
 
     public void connect() {
         try {
-            if (connector.connect(serverAddress, serverPort, clientID)) {
-                standartRemoteProvider = new StandartRemoteProvider(connector.getRemoteService(), clientID,
-                        Paths.get(downloadDir), Paths.get(uploadDir), LOG);
-                LOG.log(Level.INFO, "Connected to the server {0}:{1} with client ID {2}", new Object[]{serverAddress, serverPort, clientID});
+            if (connector.connect(params.getServerAddress(), params.getServerPort(), params.getClientName())) {
+                standartRemoteProvider = new StandartRemoteProvider(connector.getRemoteService(), params.getClientName(),
+                        Paths.get(params.getDownloadDir()), Paths.get(params.getUploadDir()), LOG);
+                LOG.log(Level.INFO, "Connected to the server {0}:{1} with client ID {2}", new Object[]{params.getServerAddress(), params.getServerPort(), params.getClientName()});
                 standartRemoteProvider.hasClientTasksInProgress();
             } else {
-                LOG.log(Level.INFO, "Client ID \"{0}\" is already in the system ", clientID);
+                LOG.log(Level.INFO, "Client ID \"{0}\" is already in the system ", params.getClientName());
             }
         } catch (RemoteException e) {
             LOG.log(Level.WARNING, "Problem during creating session: {0}", e.getMessage());

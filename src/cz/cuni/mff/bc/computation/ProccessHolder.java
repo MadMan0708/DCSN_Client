@@ -8,6 +8,7 @@ import cz.cuni.mff.bc.api.enums.TaskState;
 import cz.cuni.mff.bc.api.main.Task;
 import cz.cuni.mff.bc.api.main.TaskID;
 import cz.cuni.mff.bc.client.Client;
+import cz.cuni.mff.bc.client.ClientParameters;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -27,6 +28,7 @@ public class ProccessHolder implements IProcessHolder {
     private Task tsk;
     private File classPath;
     private CustomCL customCL;
+    private ClientParameters params;
 
     /**
      * Initialise ProcessHolder class with Task to be calculated
@@ -55,12 +57,12 @@ public class ProccessHolder implements IProcessHolder {
                 + separator + "bin" + separator + "java";
         ProcessBuilder processBuilder =
                 new ProcessBuilder(path,
-                "-Xmx"+memory+"m",
+                "-Xmx" + memory + "m",
                 "-jar", jarLocation,
                 classPath,
                 tskDir,
                 tskID);
- 
+
         processBuilder.redirectErrorStream(redirectStream);
         Process process = processBuilder.start();
         LOG.log(Level.INFO, "Virtual machine for task {0} launched", tsk.getUnicateID());
