@@ -1,3 +1,4 @@
+- IMPORTANT comment code
 - cancel project on client command is not working if project is completed but not in list for download on server
 - show message on client that the archive is not supported if it unsupported extension
 - check if given project is valid project

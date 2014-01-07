@@ -1,3 +1,6 @@
+7.1.2014
+- tasks are launched in separated JVM with memory and other parameters set
+
 28.12.2013
  - broadcasting discovering of server implemented on client
 

@@ -4,6 +4,8 @@
  */
 package cz.cuni.mff.bc.client;
 
+import cz.cuni.mff.bc.computation.ProccessHolder;
+import cz.cuni.mff.bc.computation.IProcessHolder;
 import cz.cuni.mff.bc.api.main.IServer;
 import cz.cuni.mff.bc.api.main.ProjectUID;
 import cz.cuni.mff.bc.api.main.Task;
@@ -38,10 +40,10 @@ public class Checker extends Thread {
     private HashMap<ProjectUID, File> tempJars;
     private final long sleepThreadTime = 10000;
     private IServer remoteService;
-    private int limit = 3;
+    private int coreLimit = 3;
     private ExecutorService executor;
     private List<Future<Task>> futures;
-    private Map<Future<Task>, IWorker> mapping;
+    private Map<Future<Task>, IProcessHolder> mapping;
     private String clientID;
     private boolean calculationInProgress;
     private boolean recievingTasks;
@@ -51,7 +53,7 @@ public class Checker extends Thread {
 
     public Checker(IServer remoteService, String clientID, ClientCustomCL clientCustClassLoader) {
         this.tempJars = new HashMap<>();
-        this.executor = Executors.newFixedThreadPool(limit);
+        this.executor = Executors.newFixedThreadPool(coreLimit);
         this.futures = new ArrayList<>();
         this.remoteService = remoteService;
         this.mapping = new HashMap<>();
@@ -131,12 +133,13 @@ public class Checker extends Thread {
         Task tsk;
         while (calculationInProgress) {
             if (recievingTasks) {
-                if (checkStates() < limit) {
+                if (checkStates() < coreLimit) {
                     try {
                         if ((tsk = getTask()) != null) { // Checking if there are tasks to calculate
-                            IWorker wrk = new Worker(tsk);
-                            Future<Task> submit = executor.submit(wrk);
-                            mapping.put(submit, wrk);
+
+                            IProcessHolder holder = new ProccessHolder(tsk,tempJars.get(tsk.getProjectUID()));
+                            Future<Task> submit = executor.submit(holder);
+                            mapping.put(submit, holder);
                             futures.add(submit);
                         } else { // no more tasks, sleep
                             if (checkStates() == 0) { // check if all tasks has been sent to the server

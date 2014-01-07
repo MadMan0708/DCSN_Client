@@ -2,22 +2,21 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cz.cuni.mff.bc.client;
+package cz.cuni.mff.bc.computation;
 
 import cz.cuni.mff.bc.api.main.Task;
 import cz.cuni.mff.bc.api.main.TaskID;
 import java.util.concurrent.Callable;
 
 /**
- * Interface used by Worker class
  *
- * @author Jakub
+ * @author UP711643
  */
-public interface IWorker extends Callable<Task> {
+public interface IProcessHolder extends Callable<Task> {
 
     /**
      *
-     * @return TaskID of Task which is currently calculated by Worker
+     * @return TaskID of Task which is currently located in ProccessHolder
      */
     public TaskID getCurrentTaskID();
 
