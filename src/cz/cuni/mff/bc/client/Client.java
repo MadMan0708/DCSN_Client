@@ -9,7 +9,7 @@ import cz.cuni.mff.bc.client.misc.IConsole;
 import cz.cuni.mff.bc.client.misc.GConsole;
 import cz.cuni.mff.bc.api.main.Commander;
 import cz.cuni.mff.bc.api.main.JarAPI;
-import cz.cuni.mff.bc.api.main.StandartRemoteProvider;
+import cz.cuni.mff.bc.api.main.StandardRemoteProvider;
 import cz.cuni.mff.bc.client.logging.CustomFormater;
 import cz.cuni.mff.bc.client.logging.CustomHandler;
 import cz.cuni.mff.bc.client.logging.FileLogger;
@@ -52,7 +52,7 @@ import java.util.regex.Pattern;
 public class Client implements IConsole {
 
     private PropertiesManager propMan;
-    private StandartRemoteProvider standartRemoteProvider;
+    private StandardRemoteProvider standartRemoteProvider;
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(Client.class.getName());
     private CustomHandler logHandler;
     private Connector connector;
@@ -78,10 +78,6 @@ public class Client implements IConsole {
         commands = new ClientCommands(this);
     }
 
-    public StandartRemoteProvider getRemoteProvider() {
-        return standartRemoteProvider;
-    }
-
     public boolean isConnected() {
         if (standartRemoteProvider == null) {
             return false;
@@ -90,7 +86,7 @@ public class Client implements IConsole {
         }
     }
 
-    public StandartRemoteProvider getStandartRemoteProvider() {
+    public StandardRemoteProvider getStandardRemoteProvider() {
         return standartRemoteProvider;
     }
 
@@ -285,7 +281,7 @@ public class Client implements IConsole {
                 f = executor.submit(new Runnable() {
                     @Override
                     public void run() {
-                        commander.start(new StandartRemoteProvider(connector.getRemoteService(), clientName,
+                        commander.start(new StandardRemoteProvider(connector.getRemoteService(), clientName,
                                 Paths.get(downloadDir), Paths.get(uploadDir), currentJar, LOG));
                     }
                 });
@@ -479,7 +475,7 @@ public class Client implements IConsole {
     public void connect() {
         try {
             if (connector.connect(serverAddress, serverPort, clientName)) {
-                standartRemoteProvider = new StandartRemoteProvider(connector.getRemoteService(), clientName,
+                standartRemoteProvider = new StandardRemoteProvider(connector.getRemoteService(), clientName,
                         Paths.get(downloadDir), Paths.get(uploadDir), LOG);
                 LOG.log(Level.INFO, "Connected to the server {0}:{1} with client ID {2}", new Object[]{serverAddress, serverPort, clientName});
                 standartRemoteProvider.hasClientTasksInProgress();

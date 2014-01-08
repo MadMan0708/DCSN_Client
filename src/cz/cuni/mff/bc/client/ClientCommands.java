@@ -211,7 +211,7 @@ public class ClientCommands {
 
     public void printProjectInfo(String[] params) {
         if (checkParamNum(1, params)) {
-            client.getStandartRemoteProvider().printProjectInfo(params[0]);
+            client.getStandardRemoteProvider().printProjectInfo(params[0]);
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
             LOG.log(Level.INFO, "1: Project name");
@@ -292,16 +292,16 @@ public class ClientCommands {
 
                 switch (params[0]) {
                     case "all":
-                        client.getStandartRemoteProvider().printAllProjects();
+                        client.getStandardRemoteProvider().printAllProjects();
                         break;
                     case "active":
-                        client.getStandartRemoteProvider().printProjects(ProjectState.ACTIVE);
+                        client.getStandardRemoteProvider().printProjects(ProjectState.ACTIVE);
                         break;
                     case "paused":
-                        client.getStandartRemoteProvider().printProjects(ProjectState.PAUSED);
+                        client.getStandardRemoteProvider().printProjects(ProjectState.PAUSED);
                         break;
                     case "completed":
-                        client.getStandartRemoteProvider().printProjects(ProjectState.COMPLETED);
+                        client.getStandardRemoteProvider().printProjects(ProjectState.COMPLETED);
                         break;
                     default:
                         LOG.log(Level.INFO, "states which can listed are: all, completed, paused, active");
@@ -318,7 +318,7 @@ public class ClientCommands {
     public void pause(String[] params) {
         if (client.isConnected()) {
             if (checkParamNum(1, params)) {
-                client.getStandartRemoteProvider().pauseProject(params[0]);
+                client.getStandardRemoteProvider().pauseProject(params[0]);
             } else {
                 LOG.log(Level.INFO, "Expected parameters: 1");
                 LOG.log(Level.INFO, "1: Name of project which should be paused");
@@ -331,7 +331,7 @@ public class ClientCommands {
     public void cancel(String[] params) {
         if (client.isConnected()) {
             if (checkParamNum(1, params)) {
-                client.getStandartRemoteProvider().cancelProject(params[0]);
+                client.getStandardRemoteProvider().cancelProject(params[0]);
             } else {
                 LOG.log(Level.INFO, "Expected parameters: 1");
                 LOG.log(Level.INFO, "1: Name of project which should be canceled");
@@ -344,7 +344,7 @@ public class ClientCommands {
     public void resume(String[] params) {
         if (client.isConnected()) {
             if (checkParamNum(1, params)) {
-                client.getStandartRemoteProvider().resumeProject(params[0]);
+                client.getStandardRemoteProvider().resumeProject(params[0]);
             } else {
                 LOG.log(Level.INFO, "Expected parameters: 1");
                 LOG.log(Level.INFO, "1: Name of project which should be unpaused");
@@ -357,7 +357,7 @@ public class ClientCommands {
     public void downloadReady(String[] params) {
         if (client.isConnected()) {
             if (checkParamNum(1, params)) {
-                client.getStandartRemoteProvider().isProjectReadyForDownload(params[0]);
+                client.getStandardRemoteProvider().isProjectReadyForDownload(params[0]);
             } else {
                 LOG.log(Level.INFO, "Expected parameters: 1");
                 LOG.log(Level.INFO, "1: Name of project which should be checked if is ready for download");
@@ -373,7 +373,7 @@ public class ClientCommands {
                 try {
                     Path projectJar = client.getUploadFileLocation(params[0]);
                     Path projectData = client.getUploadFileLocation(params[1]);
-                    client.getStandartRemoteProvider().uploadProject(projectJar, projectData);
+                    client.getStandardRemoteProvider().uploadProject(projectJar, projectData);
                 } catch (IllegalArgumentException e) {
                     LOG.log(Level.WARNING, "Incorrect path: {0}", e.getMessage());
                 }
@@ -391,7 +391,7 @@ public class ClientCommands {
     public void download(String[] params) {
         if (client.isConnected()) {
             if (checkParamNum(1, params)) {
-                client.getStandartRemoteProvider().download(params[0], new File(client.getDownloadDir(), params[0] + ".zip"));
+                client.getStandardRemoteProvider().download(params[0], new File(client.getDownloadDir(), params[0] + ".zip"));
             } else {
                 LOG.log(Level.INFO, "Expected parameters: 1");
                 LOG.log(Level.INFO, "1: Project name");
