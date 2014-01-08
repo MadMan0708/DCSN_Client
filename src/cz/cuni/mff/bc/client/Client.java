@@ -479,6 +479,8 @@ public class Client implements IConsole {
                         Paths.get(downloadDir), Paths.get(uploadDir), LOG);
                 LOG.log(Level.INFO, "Connected to the server {0}:{1} with client ID {2}", new Object[]{serverAddress, serverPort, clientName});
                 standartRemoteProvider.hasClientTasksInProgress();
+                standartRemoteProvider.setCoresLimit(cores);
+                standartRemoteProvider.setMemoryLimit(memory);
             } else {
                 LOG.log(Level.INFO, "Client ID \"{0}\" is already in the system ", clientName);
             }

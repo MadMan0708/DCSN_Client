@@ -159,6 +159,9 @@ public class ClientCommands {
         if (checkParamNum(1, params)) {
             try {
                 client.setMemory(Integer.parseInt(params[0]));
+                if (client.isConnected()) {
+                    client.getStandardRemoteProvider().setMemoryLimit(Integer.parseInt(params[0]));
+                }
             } catch (NumberFormatException e) {
                 LOG.log(Level.WARNING, "Amount of memory allowed to use by tasks has to be positive integer");
             }
@@ -180,6 +183,9 @@ public class ClientCommands {
         if (checkParamNum(1, params)) {
             try {
                 client.setCores(Integer.parseInt(params[0]));
+                if (client.isConnected()) {
+                    client.getStandardRemoteProvider().setCoresLimit(Integer.parseInt(params[0]));
+                }
             } catch (NumberFormatException e) {
                 LOG.log(Level.WARNING, "Number of cores allowed to use by tasks has to be positive integer");
             }
@@ -204,6 +210,8 @@ public class ClientCommands {
             getServerPort(params);
             getDownloadDir(params);
             getUploadDir(params);
+            getMemory(params);
+            getCores(params);
         } else {
             LOG.log(Level.INFO, "Command has no parameters");
         }
