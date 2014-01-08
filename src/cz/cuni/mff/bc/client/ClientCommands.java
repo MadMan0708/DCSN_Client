@@ -287,7 +287,7 @@ public class ClientCommands {
     }
 
     public void list(String[] params) {
-        if (client.remoteProviderAvailable()) {
+        if (client.isConnected()) {
             if (checkParamNum(1, params)) {
 
                 switch (params[0]) {
@@ -316,7 +316,7 @@ public class ClientCommands {
     }
 
     public void pause(String[] params) {
-        if (client.remoteProviderAvailable()) {
+        if (client.isConnected()) {
             if (checkParamNum(1, params)) {
                 client.getStandartRemoteProvider().pauseProject(params[0]);
             } else {
@@ -329,7 +329,7 @@ public class ClientCommands {
     }
 
     public void cancel(String[] params) {
-        if (client.remoteProviderAvailable()) {
+        if (client.isConnected()) {
             if (checkParamNum(1, params)) {
                 client.getStandartRemoteProvider().cancelProject(params[0]);
             } else {
@@ -342,7 +342,7 @@ public class ClientCommands {
     }
 
     public void resume(String[] params) {
-        if (client.remoteProviderAvailable()) {
+        if (client.isConnected()) {
             if (checkParamNum(1, params)) {
                 client.getStandartRemoteProvider().resumeProject(params[0]);
             } else {
@@ -355,7 +355,7 @@ public class ClientCommands {
     }
 
     public void downloadReady(String[] params) {
-        if (client.remoteProviderAvailable()) {
+        if (client.isConnected()) {
             if (checkParamNum(1, params)) {
                 client.getStandartRemoteProvider().isProjectReadyForDownload(params[0]);
             } else {
@@ -368,7 +368,7 @@ public class ClientCommands {
     }
 
     public void upload(String[] params) {
-        if (client.remoteProviderAvailable()) {
+        if (client.isConnected()) {
             if (checkParamNum(2, params)) {
                 try {
                     Path projectJar = client.getUploadFileLocation(params[0]);
@@ -389,7 +389,7 @@ public class ClientCommands {
     }
 
     public void download(String[] params) {
-        if (client.remoteProviderAvailable()) {
+        if (client.isConnected()) {
             if (checkParamNum(1, params)) {
                 client.getStandartRemoteProvider().download(params[0], new File(client.getDownloadDir(), params[0] + ".zip"));
             } else {
