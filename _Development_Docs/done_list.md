@@ -1,3 +1,5 @@
+11.1.2014
+- archive correctness checking
 7.1.2014
 - tasks are launched in separated JVM with memory and other parameters set
 
