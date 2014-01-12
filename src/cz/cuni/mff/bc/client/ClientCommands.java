@@ -449,7 +449,7 @@ public class ClientCommands {
                 }
             } else {
                 LOG.log(Level.INFO, "Expected parameters: 1");
-                LOG.log(Level.INFO, "1: Type of projects - all, completed, paused, active");
+                LOG.log(Level.INFO, "1: Type of projects - all, completed, paused, active, corrupted");
             }
         } else {
             LOG.log(Level.WARNING, "Not connected");
