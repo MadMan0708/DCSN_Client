@@ -19,7 +19,7 @@ public interface IProcessHolder extends Callable<Task> {
      * @return TaskID of Task which is currently located in ProccessHolder
      */
     public TaskID getCurrentTaskID();
-
+    
     @Override
     public Task call() throws Exception;
 }

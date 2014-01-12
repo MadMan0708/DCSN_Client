@@ -311,8 +311,11 @@ public class ClientCommands {
                     case "completed":
                         client.getStandardRemoteProvider().printProjects(ProjectState.COMPLETED);
                         break;
+                    case "corrupted":
+                        client.getStandardRemoteProvider().printProjects(ProjectState.CORRUPTED);
+                        break;
                     default:
-                        LOG.log(Level.INFO, "states which can listed are: all, completed, paused, active");
+                        LOG.log(Level.INFO, "states which can listed are: all, completed, paused, active, corrupted");
                 }
             } else {
                 LOG.log(Level.INFO, "Expected parameters: 1");

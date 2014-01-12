@@ -95,7 +95,7 @@ public class Connector {
             checker.stopCalculation();
             checker.terminateCurrentTasks();
         } else {
-            checker.stopRecievingTasks();
+            checker.stopReceivingTasks();
         }
     }
 
