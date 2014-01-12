@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cz.cuni.mff.bc.computation;
+package cz.cuni.mff.bc.client.computation;
 
 import cz.cuni.mff.bc.api.main.Task;
 import java.io.File;
