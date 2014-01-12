@@ -28,7 +28,7 @@ import java.util.jar.Manifest;
 public class CompUtils {
 
     public static void serialiseToFile(Task task, File folder) throws IOException {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(folder, task.getUnicateID().getTaskID())))) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(folder, task.getUnicateID().getTaskName())))) {
             oos.writeObject(task);
             oos.flush();
         }

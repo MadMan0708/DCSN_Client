@@ -104,7 +104,7 @@ public class Connector {
             if (!checker.isCalculationInProgress()) {
                 sendInformMessage(InformMessage.CALCULATION_ENDED);
             }
-            ArrayList<TaskID> taskToCancel = remoteService.calculatedTasks(clientName, checker.getTasksInCalculation());
+            ArrayList<TaskID> taskToCancel = remoteService.sendTasksInCalculation(clientName, checker.getTasksInCalculation());
             for (TaskID tsk : taskToCancel) {
                 if (checker.cancelTaskCalculation(tsk)) {
                     LOG.log(Level.INFO, "Task {0} is canceled by server purposes", tsk);

@@ -40,7 +40,7 @@ public class ProccessHolder implements IProcessHolder {
         try {
             customCL.addNewUrl(classPath.toURI().toURL());
         } catch (MalformedURLException e) {
-            LOG.log(Level.WARNING, "Incorrect classpath for deserialising task after computation for task {0}", tsk.getUnicateID().getTaskID());
+            LOG.log(Level.WARNING, "Incorrect classpath for deserialising task after computation for task {0}", tsk.getUnicateID().getTaskName());
         }
     }
 
@@ -97,15 +97,15 @@ public class ProccessHolder implements IProcessHolder {
                 classPath.getAbsolutePath(),
                 new File(tmp, "worker.jar").getAbsolutePath(),
                 tmp.getAbsolutePath(),
-                tsk.getUnicateID().getTaskID(),
-                tsk.getUnicateID().getMemoryUsage(),
+                tsk.getUnicateID().getTaskName(),
+                tsk.getUnicateID().getMemory(),
                 true);
 
         startProccessInputReadingThread(p);
         if (p.waitFor() != 0) {
             throw new ExecutionException("Problem in the client code: ", null);
         }
-        tsk = CompUtils.deserialiseFromFile(new File(tmp, tsk.getUnicateID().getTaskID()), customCL);
+        tsk = CompUtils.deserialiseFromFile(new File(tmp, tsk.getUnicateID().getTaskName()), customCL);
         tsk.setState(TaskState.COMPLETE);
         LOG.log(Level.INFO, "Task : {0} >> calculation completed", tsk.getUnicateID());
         return tsk;

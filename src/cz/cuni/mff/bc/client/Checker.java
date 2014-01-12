@@ -114,7 +114,7 @@ public class Checker extends Thread {
         for (Future<Task> future : futures) {
             LOG.log(Level.INFO, "Calculation of {0} has been canceled", mapping.get(future).getCurrentTaskID().toString());
             try {
-                remoteService.cancelTaskFromClient(clientName, mapping.get(future).getCurrentTaskID());
+                remoteService.cancelTaskOnClient(clientName, mapping.get(future).getCurrentTaskID());
             } catch (RemoteException e) {
                 LOG.log(Level.INFO, "Canceling taks from client problem: {0}", e.getMessage());
             }
@@ -177,7 +177,6 @@ public class Checker extends Thread {
                 del.add(future);
                 try {
                     Task tsk = (Task) future.get();
-                    remoteService.setSessionClassLoaderDetails(clientName, tsk.getProjectUID());
                     remoteService.saveCompletedTask(clientName, tsk);
                 } catch (ExecutionException e) {
                     // doslo k chybe, na server je treba odeslat info o odasociovani tohoto klienta a tohoto tasku
@@ -194,7 +193,7 @@ public class Checker extends Thread {
     }
 
     private File downloadProjectJar(ProjectUID uid) throws IOException {
-        File tmp = File.createTempFile(uid.getClientID(), uid.getProjectID(), tmpDir);
+        File tmp = File.createTempFile(uid.getClientName(), uid.getProjectName(), tmpDir);
         try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(tmp));
                 Pipe pipe = remoteService.downloadProjectJar(uid, null)) {
 
