@@ -9,17 +9,19 @@ import cz.cuni.mff.bc.api.main.TaskID;
 import java.util.concurrent.Callable;
 
 /**
+ * Interface used by process holders
  *
- * @author UP711643
+ * @author Jakub Hava
  */
 public interface IProcessHolder extends Callable<Task> {
 
     /**
+     * Returns id of task which is holden by process holder
      *
-     * @return TaskID of Task which is currently located in ProccessHolder
+     * @return TaskID of Task which is holden by process holder
      */
     public TaskID getCurrentTaskID();
-    
+
     @Override
     public Task call() throws Exception;
 }

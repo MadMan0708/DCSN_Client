@@ -1,5 +1,10 @@
+12.1.2014
+- commenting and refactoring code
+- cancelling project is not working if project is completed but not in list for download on server
+
 11.1.2014
 - archive correctness checking
+
 7.1.2014
 - tasks are launched in separated JVM with memory and other parameters set
 

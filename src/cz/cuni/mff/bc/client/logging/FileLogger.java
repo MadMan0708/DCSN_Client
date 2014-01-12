@@ -11,13 +11,19 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
+ * Represents logging target logging to the file
  *
- * @author UP711643
+ * @author Jakub Hava
  */
 public class FileLogger implements ILogTarget {
 
     private File logFile;
 
+    /**
+     * Constructor
+     *
+     * @param logFile file where to log
+     */
     public FileLogger(File logFile) {
         this.logFile = logFile;
     }

@@ -9,6 +9,7 @@ import cz.cuni.mff.bc.api.main.ITask;
 import cz.cuni.mff.bc.api.main.ProjectUID;
 import cz.cuni.mff.bc.api.main.Task;
 import cz.cuni.mff.bc.api.main.TaskID;
+import cz.cuni.mff.bc.client.ClientCustomCL;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,11 +23,19 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 /**
+ * Methods used by classes which provides computation of tasks
  *
- * @author UP711643
+ * @author Jakub Hava
  */
 public class CompUtils {
 
+    /**
+     * Serialise the task to the file
+     *
+     * @param task task to serialise
+     * @param folder destination folder
+     * @throws IOException
+     */
     public static void serialiseToFile(Task task, File folder) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(folder, task.getUnicateID().getTaskName())))) {
             oos.writeObject(task);
@@ -34,7 +43,16 @@ public class CompUtils {
         }
     }
 
-    public static Task deserialiseFromFile(File file, CustomCL customCL) throws IOException, ClassNotFoundException {
+    /**
+     * Deserialise the task from file
+     *
+     * @param file file with the serialised task
+     * @param customCL custom class loader
+     * @return deserialised task
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    public static Task deserialiseFromFile(File file, ClientCustomCL customCL) throws IOException, ClassNotFoundException {
         try (CustObjectInputStream ois = new CustObjectInputStream(new FileInputStream(file), customCL)) {
             Object o = ois.readObject();
             if (o instanceof Task) {
@@ -46,6 +64,13 @@ public class CompUtils {
 
     }
 
+    /**
+     * Creates the worker jar which provides the computation on task, in
+     * different process
+     *
+     * @param file file where to create the worker
+     * @throws IOException
+     */
     public static void createWorkerJar(File file) throws IOException {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
@@ -57,7 +82,7 @@ public class CompUtils {
             addClassToJar(jarOutputStream, TaskID.class);
             addClassToJar(jarOutputStream, ITask.class);
             addClassToJar(jarOutputStream, ProjectUID.class);
-            addClassToJar(jarOutputStream, CustomCL.class);
+            addClassToJar(jarOutputStream, ClientCustomCL.class);
             addClassToJar(jarOutputStream, CustObjectInputStream.class);
             addClassToJar(jarOutputStream, CompUtils.class);
 

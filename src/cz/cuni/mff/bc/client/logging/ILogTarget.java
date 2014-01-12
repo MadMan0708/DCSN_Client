@@ -5,10 +5,16 @@
 package cz.cuni.mff.bc.client.logging;
 
 /**
+ * Class used to define custom logging targets
  *
- * @author UP711643
+ * @author Jakub Hava
  */
 public interface ILogTarget {
 
+    /**
+     * Logs the message
+     *
+     * @param message message to log
+     */
     public void log(String message);
 }

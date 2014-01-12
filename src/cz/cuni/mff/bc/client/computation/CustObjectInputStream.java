@@ -4,6 +4,7 @@
  */
 package cz.cuni.mff.bc.client.computation;
 
+import cz.cuni.mff.bc.client.ClientCustomCL;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -11,14 +12,23 @@ import java.io.ObjectStreamClass;
 import java.lang.reflect.Proxy;
 
 /**
+ * Custom object input stream with custom class loader
  *
- * @author Jakub
+ * @author Jakub Hava
  */
 public class CustObjectInputStream extends ObjectInputStream {
 
-    CustomCL cl;
+    private ClientCustomCL cl;
 
-    public CustObjectInputStream(InputStream in, CustomCL cl) throws IOException {
+    /**
+     * Constructor
+     *
+     * @param in input stream from the file where the serialised object is
+     * stored
+     * @param cl custom class loader
+     * @throws IOException
+     */
+    public CustObjectInputStream(InputStream in, ClientCustomCL cl) throws IOException {
         super(in);
         this.cl = cl;
     }

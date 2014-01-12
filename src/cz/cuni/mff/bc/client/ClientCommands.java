@@ -439,7 +439,7 @@ public class ClientCommands {
                         client.getStandardRemoteProvider().printProjects(ProjectState.PAUSED);
                         break;
                     case "completed":
-                        client.getStandardRemoteProvider().printProjects(ProjectState.COMPLETED);
+                        client.getStandardRemoteProvider().printProjects(ProjectState.READY_FOR_DOWNLOAD);
                         break;
                     case "corrupted":
                         client.getStandardRemoteProvider().printProjects(ProjectState.CORRUPTED);

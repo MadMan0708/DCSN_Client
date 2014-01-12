@@ -9,17 +9,26 @@ import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 
 /**
+ * Custom logging handler
  *
- * @author Jakub
+ * @author Jakub Hava
  */
 public class CustomHandler extends Handler {
-    
+
     private ArrayList<ILogTarget> targets = new ArrayList<>();
-    
+
+    /**
+     *Adds new logging target to the log handler
+     * @param target log target
+     */
     public void addLogTarget(ILogTarget target) {
         targets.add(target);
     }
 
+    /**
+     *Deletes the logging target from the log handler
+     * @param target
+     */
     public void deleteLogTarger(ILogTarget target) {
         targets.remove(target);
     }
@@ -30,12 +39,12 @@ public class CustomHandler extends Handler {
             iLogTarget.log(getFormatter().format(record));
         }
     }
-    
+
     @Override
     public void flush() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     @Override
     public void close() throws SecurityException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.

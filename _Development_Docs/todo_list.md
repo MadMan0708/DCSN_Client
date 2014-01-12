@@ -1,2 +1,0 @@
-- IMPORTANT comment code
-- cancel project on client command is not working if project is completed but not in list for download on server

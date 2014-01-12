@@ -27,8 +27,9 @@ import java.awt.event.WindowListener;
 import java.util.LinkedList;
 
 /**
+ * Graphical console
  *
- * @author Jakub
+ * @author Jakub Hava
  */
 public class GConsole extends Thread implements ILogTarget {
 
@@ -45,7 +46,7 @@ public class GConsole extends Thread implements ILogTarget {
     private TextArea log;
     private TextArea history;
     private IConsole node;
-    Window mainWindow;
+    private Window mainWindow;
     private int position = -1;
     private final int inputHistoryCapacity = 10;
     private LinkedList<String> hist = new LinkedList<>();
@@ -89,16 +90,28 @@ public class GConsole extends Thread implements ILogTarget {
         log.insertLine(0, " " + message + "  ");
     }
 
+    /**
+     * Prints message to the history part of the console window
+     *
+     * @param message message to print
+     */
     public synchronized void printToHistory(String message) {
         history.insertLine(0, " " + message + "  ");
     }
 
+    /**
+     * Constructor
+     *
+     * @param node node where the GUI is being used
+     * @param type name of the node. For example client or server
+     * @param listener window listener used to close the console window
+     */
     public GConsole(IConsole node, String type, WindowListener listener) {
         this.listener = listener;
         this.node = node;
         this.inputDeviceType = type;
         terminal = new SwingTerminal(new TerminalSize(100, 30));
-     
+
         screen = new Screen(terminal);
         GUI = new GUIScreen(screen);
         mainWindow = new Window("DSCN: Distributed Computing in Small Networks");
@@ -115,10 +128,11 @@ public class GConsole extends Thread implements ILogTarget {
 
         history = new TextArea();
         history.removeLine(0);
-
-
     }
 
+    /**
+     * Starts the console
+     */
     public void startConsole() {
         start();
     }
@@ -128,6 +142,7 @@ public class GConsole extends Thread implements ILogTarget {
         showConsole();
     }
 
+    // method does all the settings and creates the console window
     private void showConsole() {
         if (GUI == null) {
             System.err.println("Couldn't allocate a terminal!");
@@ -174,13 +189,12 @@ public class GConsole extends Thread implements ILogTarget {
         historyPanel.addComponent(history);
         logPanel.addComponent(log);
 
-
         TerminalSize size = GUI.getScreen().getTerminalSize();
 
         int logPanelRows = (int) Math.floor(((float) size.getRows() / (float) 100) * 25);
         history.setPreferredSize(new TerminalSize(size.getColumns(), size.getRows() - logPanelRows - 1));
         input.setPreferredSize(new TerminalSize(screen.getTerminalSize().getColumns(), 1));
-        log.setPreferredSize(new TerminalSize(screen.getTerminalSize().getColumns(),logPanelRows));
+        log.setPreferredSize(new TerminalSize(screen.getTerminalSize().getColumns(), logPanelRows));
         mainPanel.addComponent(inputPanel, BorderLayout.TOP);
         mainPanel.addComponent(logPanel, BorderLayout.BOTTOM);
         mainPanel.addComponent(historyPanel, BorderLayout.LEFT);
@@ -193,19 +207,12 @@ public class GConsole extends Thread implements ILogTarget {
         });
 
         mainWindow.addComponent(mainPanel, BorderLayout.CENTER);
-terminal.getJFrame().setMinimumSize((new Dimension(600, 400)));
-        // GUI.showWindow(mainWindow, GUIScreen.Position.FULL_SCREEN);
-        // GUI.getScreen().stopScreen();
+        terminal.getJFrame().setMinimumSize((new Dimension(600, 400)));
+
         new Thread() {
             public void run() {
-                
                 GUI.showWindow(mainWindow, GUIScreen.Position.FULL_SCREEN);
-
             }
         }.start();
-
-
-
-        //GUI.getScreen().stopScreen();
     }
 }

@@ -131,8 +131,8 @@ public class Client implements IConsole {
     }
 
     /**
-     * Starts manual processing. Executes start method in client's implementation
-     * of Commander class
+     * Starts manual processing. Executes start method in client's
+     * implementation of Commander class
      *
      * @param jar destination to the project jar
      * @return future representing processing
@@ -299,11 +299,13 @@ public class Client implements IConsole {
             try (DatagramSocket socket = new DatagramSocket()) {
                 socket.setBroadcast(true);
                 byte[] sendData = "DISCOVER_SERVER_REQUEST".getBytes();
-
-                DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length,
-                        InetAddress.getByName("255.255.255.255"), clientParams.getServerPort());
-                socket.send(sendPacket);
-                LOG.log(Level.INFO, "Request packet sent to: 255.255.255.255 (DEFAULT)");
+                try {
+                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length,
+                            InetAddress.getByName("255.255.255.255"), clientParams.getServerPort());
+                    socket.send(sendPacket);
+                    LOG.log(Level.INFO, "Request packet sent to: 255.255.255.255 (DEFAULT)");
+                } catch (IOException e) {
+                }
 
                 // Broadcast the message over all the network interfaces
                 Enumeration interfaces = NetworkInterface.getNetworkInterfaces();
@@ -318,10 +320,13 @@ public class Client implements IConsole {
                         if (broadcast == null) {
                             continue;
                         }
-                        // Send the broadcast packrt
-                        sendPacket = new DatagramPacket(sendData, sendData.length, broadcast, clientParams.getServerPort());
-                        socket.send(sendPacket);
-                        LOG.log(Level.INFO, "Request packet sent to: {0}; Interface: {1}", new Object[]{broadcast.getHostAddress(), networkInterface.getDisplayName()});
+                        // Send the broadcast packet
+                        try {
+                            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, broadcast, clientParams.getServerPort());
+                            socket.send(sendPacket);
+                            LOG.log(Level.INFO, "Request packet sent to: {0}; Interface: {1}", new Object[]{broadcast.getHostAddress(), networkInterface.getDisplayName()});
+                        } catch (IOException e) {
+                        }
                     }
                 }
                 LOG.log(Level.INFO, "Looping over all network interfaces done. Now waiting for a reply!");

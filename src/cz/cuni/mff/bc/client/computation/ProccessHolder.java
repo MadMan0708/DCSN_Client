@@ -8,6 +8,7 @@ import cz.cuni.mff.bc.api.enums.TaskState;
 import cz.cuni.mff.bc.api.main.Task;
 import cz.cuni.mff.bc.api.main.TaskID;
 import cz.cuni.mff.bc.client.Client;
+import cz.cuni.mff.bc.client.ClientCustomCL;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -18,15 +19,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Class hold the external process with task computation
  *
- * @author UP711643
+ * @author Jakub Hava
  */
 public class ProccessHolder implements IProcessHolder {
 
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
     private Task tsk;
     private File classPath;
-    private CustomCL customCL;
+    private ClientCustomCL customCL;
 
     /**
      * Initialise ProcessHolder class with Task to be calculated
@@ -36,7 +38,7 @@ public class ProccessHolder implements IProcessHolder {
     public ProccessHolder(Task tsk, File classPath) {
         this.tsk = tsk;
         this.classPath = classPath;
-        customCL = new CustomCL();
+        customCL = new ClientCustomCL();
         try {
             customCL.addNewUrl(classPath.toURI().toURL());
         } catch (MalformedURLException e) {
@@ -44,13 +46,24 @@ public class ProccessHolder implements IProcessHolder {
         }
     }
 
-
     @Override
     public TaskID getCurrentTaskID() {
         return tsk.getUnicateID();
     }
 
-    public Process startJVM(String classPath, String jarLocation, String tskDir, String tskID, int memory, boolean redirectStream) throws Exception {
+    /**
+     * Starts the new java virtual machine with given parameters
+     *
+     * @param classPath class path
+     * @param jarLocation path to the worker jar
+     * @param taskDir directory where the task is located
+     * @param taskName task name
+     * @param memory memory limit
+     * @param redirectStream true if streams will be redirected, false otherwise
+     * @return process created by the new JVM
+     * @throws Exception
+     */
+    public Process startJVM(String classPath, String jarLocation, String taskDir, String taskName, int memory, boolean redirectStream) throws Exception {
         String separator = System.getProperty("file.separator");
         String path = System.getProperty("java.home")
                 + separator + "bin" + separator + "java";
@@ -59,9 +72,8 @@ public class ProccessHolder implements IProcessHolder {
                 "-Xmx" + memory + "m",
                 "-jar", jarLocation,
                 classPath,
-                tskDir,
-                tskID);
-
+                taskDir,
+                taskName);
         processBuilder.redirectErrorStream(redirectStream);
         Process process = processBuilder.start();
         LOG.log(Level.INFO, "Virtual machine for task {0} launched", tsk.getUnicateID());
@@ -70,6 +82,11 @@ public class ProccessHolder implements IProcessHolder {
         return process;
     }
 
+    /**
+     * Reads and prints messages from input stream of task computation process
+     *
+     * @param process process with the task computation
+     */
     public void startProccessInputReadingThread(final Process process) {
         new Thread() {
             @Override

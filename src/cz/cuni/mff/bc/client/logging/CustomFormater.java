@@ -9,8 +9,9 @@ import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
 /**
+ * Custom log formater
  *
- * @author Jakub
+ * @author Jakub Hava
  */
 public class CustomFormater extends Formatter {
 
