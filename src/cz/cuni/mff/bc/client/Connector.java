@@ -18,8 +18,9 @@ import org.cojen.dirmi.Environment;
 import org.cojen.dirmi.Session;
 
 /**
+ * Handles connection session
  *
- * @author Jakub
+ * @author Jakub Hava
  */
 public class Connector {
 
@@ -33,6 +34,11 @@ public class Connector {
     private long informPeriod = 1000;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
+    /**
+     * Starts the calculation
+     *
+     * @throws RemoteException
+     */
     public void startCalculation() throws RemoteException {
         if (remoteSession != null) {
             checker = new Checker(remoteService, clientName, cl);
@@ -52,7 +58,12 @@ public class Connector {
         }
     }
 
-    public boolean isRecievingTasks() {
+    /**
+     * Checks if checker receiving tasks
+     *
+     * @return true if checker is receiving tasks, false otherwise
+     */
+    public boolean isReceivingTasks() {
         if (checker == null || !checker.isCalculationInProgress()) {
             return false;
         } else {
@@ -68,28 +79,49 @@ public class Connector {
         remoteSession.send(clientName);
         if (((Boolean) remoteSession.receive()).equals(Boolean.TRUE)) {
             remoteService = (IServer) remoteSession.receive();
-            // cl.setRemoteService(remoteService);
             return true;
         } else {
             return false;
         }
     }
 
-    public boolean connect(String IPAddress, int port, String clientName) throws RemoteException, IOException {
+    /**
+     * Connects the the server
+     *
+     * @param IPAddress server address
+     * @param port server port
+     * @param clientName client's name
+     * @return true if connection was successful, false otherwise
+     * @throws RemoteException
+     * @throws IOException
+     */
+    public boolean connect(String address, int port, String clientName) throws RemoteException, IOException {
         this.clientName = clientName;
         cl = new ClientCustomCL();
         env = new Environment();
 
-        remoteSession = env.newSessionConnector(IPAddress, port).connect();
+        remoteSession = env.newSessionConnector(address, port).connect();
         remoteSession.setClassLoader(cl);
         return autorizeClient(clientName);
     }
 
+    /**
+     * Disconnects from the server
+     *
+     * @throws IOException
+     */
     public void disconnect() throws IOException {
         remoteSession.close();
         env.close();
     }
 
+    /**
+     * Stops the calculation
+     *
+     * @param force true if the task should be cancelled immedeatelly, false if
+     * the method should wait for current task to finish computation
+     * @throws RemoteException
+     */
     public void stopCalculation(boolean force) throws RemoteException {
         if (force) {
             checker.stopCalculation();
@@ -117,6 +149,11 @@ public class Connector {
         }
     }
 
+    /**
+     * Gets remote interface implementation
+     *
+     * @return remote interface implementation
+     */
     public IServer getRemoteService() {
         return remoteService;
     }

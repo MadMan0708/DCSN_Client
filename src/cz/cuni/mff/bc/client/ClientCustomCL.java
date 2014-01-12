@@ -9,11 +9,13 @@ import java.net.URLClassLoader;
 import java.net.URLStreamHandlerFactory;
 
 /**
+ * Client custom class loader
  *
- * @author Jakub
+ * @author Jakub Hava
  */
-public class ClientCustomCL extends URLClassLoader{
-      public ClientCustomCL() {
+public class ClientCustomCL extends URLClassLoader {
+
+    public ClientCustomCL() {
         super(new URL[]{});
     }
 
@@ -29,6 +31,10 @@ public class ClientCustomCL extends URLClassLoader{
         super(urls, parent, factory);
     }
 
+    /**
+     *
+     * @param url adds new URL to the list where class are being searched
+     */
     public void addNewUrl(URL url) {
         addURL(url);
     }

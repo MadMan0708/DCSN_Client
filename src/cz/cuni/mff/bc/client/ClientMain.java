@@ -7,12 +7,15 @@ package cz.cuni.mff.bc.client;
 import java.rmi.RemoteException;
 
 /**
+ * Main entry point of the client side
  *
- * @author Aku
+ * @author Jakub Hava
  */
 public class ClientMain {
 
     /**
+     * Main method
+     *
      * @param args the command line arguments
      */
     public static void main(String[] args) throws RemoteException {
@@ -21,18 +24,18 @@ public class ClientMain {
             case 0:
                 client.startGUIConsole();
                 client.startClassicConsole();
-                client.initialize();
+                client.initialise();
                 break;
             case 1:
                 if (args[0].equals("nogui")) {
                     client.startClassicConsole();
-                    client.initialize();
+                    client.initialise();
                 } else if (args[0].startsWith("task=")) {
                     client.startClassicConsole();
-                    client.initialize();
+                    client.initialise();
                     String pathToTask = args[0].substring(args[0].indexOf("=") + 1);
-                    client.autoMode(pathToTask); 
-                }else{
+                    client.autoMode(pathToTask);
+                } else {
                     System.err.println("Incorrect parameter");
                 }
                 break;
