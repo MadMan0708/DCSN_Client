@@ -33,7 +33,7 @@ import org.cojen.dirmi.Pipe;
  * Class checks regularly server tasks pool. Tasks are collected by client for
  * the calculation.
  *
- * @author Aku
+ * @author Jakub Hava
  */
 public class Checker extends Thread {
 
