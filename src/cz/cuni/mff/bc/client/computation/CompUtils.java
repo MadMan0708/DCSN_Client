@@ -4,12 +4,13 @@
  */
 package cz.cuni.mff.bc.client.computation;
 
+import cz.cuni.mff.bc.client.misc.CustomObjectInputStream;
 import cz.cuni.mff.bc.api.enums.TaskState;
 import cz.cuni.mff.bc.api.main.ITask;
 import cz.cuni.mff.bc.api.main.ProjectUID;
 import cz.cuni.mff.bc.api.main.Task;
 import cz.cuni.mff.bc.api.main.TaskID;
-import cz.cuni.mff.bc.client.ClientCustomCL;
+import cz.cuni.mff.bc.client.misc.CustomClassLoader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,8 +53,8 @@ public class CompUtils {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    public static Task deserialiseFromFile(File file, ClientCustomCL customCL) throws IOException, ClassNotFoundException {
-        try (CustObjectInputStream ois = new CustObjectInputStream(new FileInputStream(file), customCL)) {
+    public static Task deserialiseFromFile(File file, CustomClassLoader customCL) throws IOException, ClassNotFoundException {
+        try (CustomObjectInputStream ois = new CustomObjectInputStream(new FileInputStream(file), customCL)) {
             Object o = ois.readObject();
             if (o instanceof Task) {
                 return (Task) o;
@@ -82,10 +83,9 @@ public class CompUtils {
             addClassToJar(jarOutputStream, TaskID.class);
             addClassToJar(jarOutputStream, ITask.class);
             addClassToJar(jarOutputStream, ProjectUID.class);
-            addClassToJar(jarOutputStream, ClientCustomCL.class);
-            addClassToJar(jarOutputStream, CustObjectInputStream.class);
+            addClassToJar(jarOutputStream, CustomClassLoader.class);
+            addClassToJar(jarOutputStream, CustomObjectInputStream.class);
             addClassToJar(jarOutputStream, CompUtils.class);
-
         }
     }
 

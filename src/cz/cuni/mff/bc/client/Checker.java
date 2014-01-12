@@ -4,6 +4,7 @@
  */
 package cz.cuni.mff.bc.client;
 
+import cz.cuni.mff.bc.client.misc.CustomClassLoader;
 import cz.cuni.mff.bc.client.computation.ProccessHolder;
 import cz.cuni.mff.bc.client.computation.IProcessHolder;
 import cz.cuni.mff.bc.api.main.IServer;
@@ -46,7 +47,7 @@ public class Checker extends Thread {
     private Map<Future<Task>, IProcessHolder> mapping;
     private boolean calculationInProgress;
     private boolean receivingTasks;
-    private ClientCustomCL clientCustClassLoader;
+    private CustomClassLoader clientCustClassLoader;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
     private File tmpDir;
     private String clientName;
@@ -58,7 +59,7 @@ public class Checker extends Thread {
      * @param clientName client's name
      * @param clientCustClassLoader client class loader
      */
-    public Checker(IServer remoteService, String clientName, ClientCustomCL clientCustClassLoader) {
+    public Checker(IServer remoteService, String clientName, CustomClassLoader clientCustClassLoader) {
         this.tempJars = new HashMap<>();
         this.executor = Executors.newFixedThreadPool(coreLimit);
         this.remoteService = remoteService;

@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cz.cuni.mff.bc.client;
+package cz.cuni.mff.bc.client.misc;
 
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -13,21 +13,21 @@ import java.net.URLStreamHandlerFactory;
  *
  * @author Jakub Hava
  */
-public class ClientCustomCL extends URLClassLoader {
+public class CustomClassLoader extends URLClassLoader {
 
-    public ClientCustomCL() {
+    public CustomClassLoader() {
         super(new URL[]{});
     }
 
-    public ClientCustomCL(URL[] urls, ClassLoader parent) {
+    public CustomClassLoader(URL[] urls, ClassLoader parent) {
         super(urls, parent);
     }
 
-    public ClientCustomCL(URL[] urls) {
+    public CustomClassLoader(URL[] urls) {
         super(urls);
     }
 
-    public ClientCustomCL(URL[] urls, ClassLoader parent, URLStreamHandlerFactory factory) {
+    public CustomClassLoader(URL[] urls, ClassLoader parent, URLStreamHandlerFactory factory) {
         super(urls, parent, factory);
     }
 

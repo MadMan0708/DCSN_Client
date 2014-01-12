@@ -2,9 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cz.cuni.mff.bc.client.computation;
+package cz.cuni.mff.bc.client.misc;
 
-import cz.cuni.mff.bc.client.ClientCustomCL;
+import cz.cuni.mff.bc.client.misc.CustomClassLoader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -16,9 +16,9 @@ import java.lang.reflect.Proxy;
  *
  * @author Jakub Hava
  */
-public class CustObjectInputStream extends ObjectInputStream {
+public class CustomObjectInputStream extends ObjectInputStream {
 
-    private ClientCustomCL cl;
+    private CustomClassLoader cl;
 
     /**
      * Constructor
@@ -28,7 +28,7 @@ public class CustObjectInputStream extends ObjectInputStream {
      * @param cl custom class loader
      * @throws IOException
      */
-    public CustObjectInputStream(InputStream in, ClientCustomCL cl) throws IOException {
+    public CustomObjectInputStream(InputStream in, CustomClassLoader cl) throws IOException {
         super(in);
         this.cl = cl;
     }

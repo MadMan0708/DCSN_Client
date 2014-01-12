@@ -4,6 +4,7 @@
  */
 package cz.cuni.mff.bc.client;
 
+import cz.cuni.mff.bc.client.misc.CustomClassLoader;
 import cz.cuni.mff.bc.api.enums.InformMessage;
 import cz.cuni.mff.bc.api.main.IServer;
 import cz.cuni.mff.bc.api.main.TaskID;
@@ -27,7 +28,7 @@ public class Connector {
     private Session remoteSession;
     private IServer remoteService;
     private Environment env;
-    private ClientCustomCL cl;
+    private CustomClassLoader cl;
     private String clientName;
     private Checker checker;
     private Timer timer;
@@ -97,7 +98,7 @@ public class Connector {
      */
     public boolean connect(String address, int port, String clientName) throws RemoteException, IOException {
         this.clientName = clientName;
-        cl = new ClientCustomCL();
+        cl = new CustomClassLoader();
         env = new Environment();
 
         remoteSession = env.newSessionConnector(address, port).connect();

@@ -5,7 +5,7 @@
 package cz.cuni.mff.bc.client.computation;
 
 import cz.cuni.mff.bc.api.main.Task;
-import cz.cuni.mff.bc.client.ClientCustomCL;
+import cz.cuni.mff.bc.client.misc.CustomClassLoader;
 import java.io.File;
 import java.io.IOException;
 
@@ -16,11 +16,11 @@ import java.io.IOException;
  */
 public class Worker {
 
-    private static ClientCustomCL customCL;
+    private static CustomClassLoader customCL;
 
     public static void main(String[] args) {
         try {
-            customCL = new ClientCustomCL();
+            customCL = new CustomClassLoader();
             customCL.addNewUrl(new File(args[0]).toURI().toURL());
             Task tsk = CompUtils.deserialiseFromFile(new File(args[1], args[2]), customCL);
             tsk.calculate();

@@ -8,7 +8,7 @@ import cz.cuni.mff.bc.api.enums.TaskState;
 import cz.cuni.mff.bc.api.main.Task;
 import cz.cuni.mff.bc.api.main.TaskID;
 import cz.cuni.mff.bc.client.Client;
-import cz.cuni.mff.bc.client.ClientCustomCL;
+import cz.cuni.mff.bc.client.misc.CustomClassLoader;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -28,7 +28,7 @@ public class ProccessHolder implements IProcessHolder {
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
     private Task tsk;
     private File classPath;
-    private ClientCustomCL customCL;
+    private CustomClassLoader customCL;
 
     /**
      * Initialise ProcessHolder class with Task to be calculated
@@ -38,7 +38,7 @@ public class ProccessHolder implements IProcessHolder {
     public ProccessHolder(Task tsk, File classPath) {
         this.tsk = tsk;
         this.classPath = classPath;
-        customCL = new ClientCustomCL();
+        customCL = new CustomClassLoader();
         try {
             customCL.addNewUrl(classPath.toURI().toURL());
         } catch (MalformedURLException e) {
