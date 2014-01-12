@@ -203,7 +203,7 @@ public class Checker extends Thread {
             if (future.isDone()) {
                 del.add(future);
                 try {
-                    Task tsk = (Task) future.get();
+                    Task tsk = (Task) future.get();        
                     remoteService.saveCompletedTask(clientName, tsk);
                 } catch (ExecutionException e) {
                     LOG.log(Level.WARNING, "Problem during execution of task {0}", ((Exception) e.getCause()).toString());

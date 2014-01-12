@@ -89,7 +89,7 @@ public class Connector {
     /**
      * Connects the the server
      *
-     * @param IPAddress server address
+     * @param address server address
      * @param port server port
      * @param clientName client's name
      * @return true if connection was successful, false otherwise

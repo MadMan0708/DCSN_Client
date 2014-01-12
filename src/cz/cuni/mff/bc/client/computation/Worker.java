@@ -18,6 +18,11 @@ public class Worker {
 
     private static CustomClassLoader customCL;
 
+    /**
+     * Main entry fro the task calculation itself
+     *
+     * @param args arguments to specify task which will be calculated
+     */
     public static void main(String[] args) {
         try {
             customCL = new CustomClassLoader();

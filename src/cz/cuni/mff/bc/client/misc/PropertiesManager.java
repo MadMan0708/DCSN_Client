@@ -61,7 +61,7 @@ public class PropertiesManager {
      * Gets the property
      *
      * @param key key of the property
-     * @param defaulValue default value of the property
+     * @param defaultValue default value of the property
      * @return value of the property
      */
     public String getProperty(String key, String defaultValue) {

@@ -17,6 +17,7 @@ public class ClientMain {
      * Main method
      *
      * @param args the command line arguments
+     * @throws RemoteException
      */
     public static void main(String[] args) throws RemoteException {
         final Client client = new Client();

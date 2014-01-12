@@ -57,6 +57,9 @@ public class Client implements IConsole {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(Client.class.getName());
     private ExecutorService executor = Executors.newCachedThreadPool();
 
+    /**
+     * Constructor
+     */
     public Client() {
         logHandler = new CustomHandler();
         logHandler.setFormatter(new CustomFormater());
