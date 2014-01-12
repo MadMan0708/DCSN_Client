@@ -47,7 +47,7 @@ import java.util.regex.Pattern;
 
 /**
  *
- * @author Aku
+ * @author Jakub Hava
  */
 public class Client implements IConsole {
 
