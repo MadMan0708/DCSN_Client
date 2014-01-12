@@ -9,7 +9,7 @@ import java.net.URLClassLoader;
 import java.net.URLStreamHandlerFactory;
 
 /**
- * Client custom class loader
+ * Custom class loader
  *
  * @author Jakub Hava
  */
