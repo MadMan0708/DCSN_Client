@@ -19,8 +19,8 @@ import java.util.logging.Logger;
  */
 public class ClientCommands {
 
-    private static final Logger LOG = Logger.getLogger(Client.class.getName());
     private Client client;
+    private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
     /**
      * Constructor
@@ -241,6 +241,8 @@ public class ClientCommands {
                 }
             } catch (NumberFormatException e) {
                 LOG.log(Level.WARNING, "Amount of memory allowed to use by tasks has to be positive integer");
+            } catch (IllegalArgumentException e) {
+                LOG.log(Level.WARNING, "Amount of memory allowed to use by tasks has to be positive integer");
             }
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
@@ -274,6 +276,8 @@ public class ClientCommands {
                     client.getStandardRemoteProvider().setCoresLimit(Integer.parseInt(params[0]));
                 }
             } catch (NumberFormatException e) {
+                LOG.log(Level.WARNING, "Number of cores allowed to use by tasks has to be positive integer");
+            } catch (IllegalArgumentException e) {
                 LOG.log(Level.WARNING, "Number of cores allowed to use by tasks has to be positive integer");
             }
         } else {

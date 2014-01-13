@@ -125,11 +125,16 @@ public class ClientParams {
     /**
      *
      * @param memory memory limit
+     * @throws IllegalArgumentException
      */
-    public void setMemory(int memory) {
-        this.memory = memory;
-        LOG.log(Level.INFO, "Amount of memory allowed is now set to: {0}", memory);
-        propMan.setProperty("memory", memory + "");
+    public void setMemory(int memory) throws IllegalArgumentException {
+        if (memory > 0) {
+            this.memory = memory;
+            LOG.log(Level.INFO, "Amount of memory allowed is now set to: {0}", memory);
+            propMan.setProperty("memory", memory + "");
+        } else {
+            throw new IllegalArgumentException();
+        }
     }
 
     /**
@@ -143,11 +148,16 @@ public class ClientParams {
     /**
      *
      * @param cores limit
+     * @throws IllegalArgumentException
      */
-    public void setCores(int cores) {
-        this.cores = cores;
-        LOG.log(Level.INFO, "Number of cores allowed is now set to: {0}", cores);
-        propMan.setProperty("memory", cores + "");
+    public void setCores(int cores) throws IllegalArgumentException {
+        if (cores > 0) {
+            this.cores = cores;
+            LOG.log(Level.INFO, "Number of cores allowed is now set to: {0}", cores);
+            propMan.setProperty("memory", cores + "");
+        } else {
+            throw new IllegalArgumentException();
+        }
     }
 
     /**

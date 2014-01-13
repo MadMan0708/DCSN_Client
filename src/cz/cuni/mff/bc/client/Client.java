@@ -72,6 +72,7 @@ public class Client implements IConsole {
     }
 
     /**
+     * Gets client parameters
      *
      * @return client parameters
      */
@@ -102,7 +103,7 @@ public class Client implements IConsole {
     }
 
     /**
-     * Initialises client's parameters
+     * Initialises client
      */
     public void initialise() {
         clientParams.initialisesParameters();
