@@ -138,6 +138,7 @@ public class Checker extends Thread {
         executor.shutdown();
         Set<Future<Task>> futures = mapping.keySet();
         for (Future<Task> future : futures) {
+            mapping.get(future).killProcess();
             LOG.log(Level.INFO, "Calculation of {0} has been canceled", mapping.get(future).getCurrentTaskID().toString());
             try {
                 remoteService.cancelTaskOnClient(clientName, mapping.get(future).getCurrentTaskID());

@@ -22,6 +22,11 @@ public interface IProcessHolder extends Callable<Task> {
      */
     public TaskID getCurrentTaskID();
 
+    /**
+     * Kills the process
+     */
+    public void killProcess();
+
     @Override
     public Task call() throws Exception;
 }

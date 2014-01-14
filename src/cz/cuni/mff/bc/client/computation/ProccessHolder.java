@@ -29,6 +29,7 @@ public class ProccessHolder implements IProcessHolder {
     private Task tsk;
     private File classPath;
     private CustomClassLoader customCL;
+    private Process process = null;
 
     /**
      * Initialise ProcessHolder class with Task to be calculated
@@ -50,6 +51,13 @@ public class ProccessHolder implements IProcessHolder {
     @Override
     public TaskID getCurrentTaskID() {
         return tsk.getUnicateID();
+    }
+
+    @Override
+    public void killProcess() {
+        if (process != null) { //if process started
+            process.destroy();
+        }
     }
 
     /**
@@ -119,7 +127,7 @@ public class ProccessHolder implements IProcessHolder {
                 tsk.getUnicateID().getTaskName(),
                 tsk.getUnicateID().getMemory(),
                 true);
-
+        this.process = p;
         startProccessInputReadingThread(p);
         if (p.waitFor() != 0) {
             throw new ExecutionException("Problem in the client code: ", null);
