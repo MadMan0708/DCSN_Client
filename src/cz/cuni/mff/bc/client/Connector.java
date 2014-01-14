@@ -4,6 +4,7 @@
  */
 package cz.cuni.mff.bc.client;
 
+import cz.cuni.mff.bc.client.misc.IClient;
 import cz.cuni.mff.bc.client.misc.CustomClassLoader;
 import cz.cuni.mff.bc.api.enums.InformMessage;
 import cz.cuni.mff.bc.api.main.IServer;
@@ -33,7 +34,12 @@ public class Connector {
     private Checker checker;
     private Timer timer;
     private long informPeriod = 1000;
+    private IClient clientMethods;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
+
+    public Connector() {
+        this.checker = new Checker(remoteService, clientName, cl);
+    }
 
     /**
      * Starts the calculation
@@ -42,7 +48,6 @@ public class Connector {
      */
     public void startCalculation() throws RemoteException {
         if (remoteSession != null) {
-            checker = new Checker(remoteService, clientName, cl);
             checker.startCalculation();
             sendInformMessage(InformMessage.CALCULATION_STARTED);
             timer = new Timer();
@@ -80,6 +85,12 @@ public class Connector {
         remoteSession.send(clientName);
         if (((Boolean) remoteSession.receive()).equals(Boolean.TRUE)) {
             remoteService = (IServer) remoteSession.receive();
+            remoteSession.send(new IClient() {
+                @Override
+                public void cancelTaskCalculation(TaskID taskID) throws RemoteException {
+                    checker.cancelTaskCalculation(taskID);
+                }
+            });
             return true;
         } else {
             return false;

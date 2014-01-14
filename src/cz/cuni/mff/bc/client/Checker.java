@@ -91,7 +91,8 @@ public class Checker extends Thread {
      * Cancels calculation of the task
      *
      * @param tsk TaskID of Task which should be cancel
-     * @return true if task was successfully cancel, false otherwise
+     * @return true if task was mapping contained the future with this task,
+     * false otherwise
      */
     public boolean cancelTaskCalculation(TaskID tsk) {
         Future<Task> del = null;
@@ -100,6 +101,7 @@ public class Checker extends Thread {
             if (mapping.get(future).getCurrentTaskID().equals(tsk)) {
                 if (future.cancel(true)) {
                     del = future;
+                    mapping.get(future).killProcess();
                     mapping.remove(future);
                     break;
                 }
@@ -153,6 +155,8 @@ public class Checker extends Thread {
      * Starts tasks receiving and calculation
      */
     public void startCalculation() {
+        this.tempJars = new HashMap<>();
+        this.mapping = new HashMap<>();
         calculationInProgress = true;
         receivingTasks = true;
         start();
