@@ -203,7 +203,7 @@ public class Checker extends Thread {
             if (future.isDone()) {
                 del.add(future);
                 try {
-                    Task tsk = (Task) future.get();        
+                    Task tsk = (Task) future.get();
                     remoteService.saveCompletedTask(clientName, tsk);
                 } catch (ExecutionException e) {
                     LOG.log(Level.WARNING, "Problem during execution of task {0}", ((Exception) e.getCause()).toString());
@@ -245,22 +245,22 @@ public class Checker extends Thread {
     }
 
     private Task getTask() throws RemoteException {
-        TaskID id = remoteService.getTaskIdBeforeCalculation(clientName);
-        if (id != null) {
+        ProjectUID projectUID = remoteService.getProjectIdBeforeCalculation(clientName);
+        if (projectUID != null) {
             try {
-                if (!tempJars.containsKey(id.getProjectUID())) {
-                    File tmp = downloadProjectJar(id.getProjectUID());
-                    tempJars.put(id.getProjectUID(), tmp);
+                if (!tempJars.containsKey(projectUID)) {
+                    File tmp = downloadProjectJar(projectUID);
+                    tempJars.put(projectUID, tmp);
                 }
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Temp file couldn't be created: {0}", e.getMessage());
             }
             try {
-                clientCustClassLoader.addNewUrl(tempJars.get(id.getProjectUID()).toURI().toURL());
+                clientCustClassLoader.addNewUrl(tempJars.get(projectUID).toURI().toURL());
             } catch (MalformedURLException e) {
                 LOG.log(Level.WARNING, "Path to temp file is incorrect: {0}", e.getMessage());
             }
-            return remoteService.getTask(clientName, id);
+            return remoteService.getTask(clientName, projectUID);
         } else {
             return null; // no more tasks to calculate on server
         }
