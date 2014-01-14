@@ -4,7 +4,7 @@
  */
 package cz.cuni.mff.bc.client;
 
-import cz.cuni.mff.bc.client.misc.PropertiesManager;
+import cz.cuni.mff.bc.misc.PropertiesManager;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;

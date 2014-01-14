@@ -4,8 +4,8 @@
  */
 package cz.cuni.mff.bc.client;
 
-import cz.cuni.mff.bc.client.misc.IConsole;
-import cz.cuni.mff.bc.client.misc.GConsole;
+import cz.cuni.mff.bc.misc.IConsole;
+import cz.cuni.mff.bc.misc.GConsole;
 import cz.cuni.mff.bc.api.main.Commander;
 import cz.cuni.mff.bc.api.main.JarAPI;
 import cz.cuni.mff.bc.api.main.StandardRemoteProvider;
@@ -112,7 +112,7 @@ public class Client implements IConsole {
             public void run() {
                 searchForServer();
             }
-        }.start();
+          }.start();
     }
 
     /**

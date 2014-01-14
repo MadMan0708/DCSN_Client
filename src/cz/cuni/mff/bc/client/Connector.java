@@ -4,8 +4,8 @@
  */
 package cz.cuni.mff.bc.client;
 
-import cz.cuni.mff.bc.client.misc.IClient;
-import cz.cuni.mff.bc.client.misc.CustomClassLoader;
+import cz.cuni.mff.bc.misc.IClient;
+import cz.cuni.mff.bc.misc.CustomClassLoader;
 import cz.cuni.mff.bc.api.enums.InformMessage;
 import cz.cuni.mff.bc.api.main.IServer;
 import cz.cuni.mff.bc.api.main.TaskID;
@@ -34,11 +34,9 @@ public class Connector {
     private Checker checker;
     private Timer timer;
     private long informPeriod = 1000;
-    private IClient clientMethods;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
     public Connector() {
-        this.checker = new Checker(remoteService, clientName, cl);
     }
 
     /**
@@ -86,11 +84,10 @@ public class Connector {
         if (((Boolean) remoteSession.receive()).equals(Boolean.TRUE)) {
             remoteService = (IServer) remoteSession.receive();
             remoteSession.send(new IClient() {
-                @Override
-                public void cancelTaskCalculation(TaskID taskID) throws RemoteException {
-                    checker.cancelTaskCalculation(taskID);
-                }
+                // prepared for future, if server needs to manipulate with client
             });
+            // set checker if the connection was successfull
+            this.checker = new Checker(remoteService, clientName, cl);
             return true;
         } else {
             return false;
@@ -150,11 +147,8 @@ public class Connector {
             }
             ArrayList<TaskID> taskToCancel = remoteService.sendTasksInCalculation(clientName, checker.getTasksInCalculation());
             for (TaskID tsk : taskToCancel) {
-                if (checker.cancelTaskCalculation(tsk)) {
-                    LOG.log(Level.INFO, "Task {0} is canceled by server purposes", tsk);
-                } else {
-                    LOG.log(Level.INFO, "Task {0} coldn't be canceled", tsk);
-                }
+                checker.cancelTaskCalculation(tsk);
+                LOG.log(Level.INFO, "Task {0} is canceled by server purposes", tsk);
             }
         } catch (RemoteException e) {
             LOG.log(Level.WARNING, "Server couldn't be informed due to network error");

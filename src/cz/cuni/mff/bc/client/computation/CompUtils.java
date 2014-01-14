@@ -4,13 +4,13 @@
  */
 package cz.cuni.mff.bc.client.computation;
 
-import cz.cuni.mff.bc.client.misc.CustomObjectInputStream;
+import cz.cuni.mff.bc.misc.CustomObjectInputStream;
 import cz.cuni.mff.bc.api.enums.TaskState;
 import cz.cuni.mff.bc.api.main.ITask;
 import cz.cuni.mff.bc.api.main.ProjectUID;
 import cz.cuni.mff.bc.api.main.Task;
 import cz.cuni.mff.bc.api.main.TaskID;
-import cz.cuni.mff.bc.client.misc.CustomClassLoader;
+import cz.cuni.mff.bc.misc.CustomClassLoader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;

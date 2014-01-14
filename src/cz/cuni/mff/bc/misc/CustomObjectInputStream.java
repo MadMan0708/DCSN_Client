@@ -2,9 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cz.cuni.mff.bc.client.misc;
+package cz.cuni.mff.bc.misc;
 
-import cz.cuni.mff.bc.client.misc.CustomClassLoader;
+import cz.cuni.mff.bc.misc.CustomClassLoader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;

@@ -4,7 +4,7 @@
  */
 package cz.cuni.mff.bc.client;
 
-import cz.cuni.mff.bc.client.misc.CustomClassLoader;
+import cz.cuni.mff.bc.misc.CustomClassLoader;
 import cz.cuni.mff.bc.client.computation.ProccessHolder;
 import cz.cuni.mff.bc.client.computation.IProcessHolder;
 import cz.cuni.mff.bc.api.main.IServer;

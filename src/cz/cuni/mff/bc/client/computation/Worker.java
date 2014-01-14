@@ -5,7 +5,7 @@
 package cz.cuni.mff.bc.client.computation;
 
 import cz.cuni.mff.bc.api.main.Task;
-import cz.cuni.mff.bc.client.misc.CustomClassLoader;
+import cz.cuni.mff.bc.misc.CustomClassLoader;
 import java.io.File;
 import java.io.IOException;
 
