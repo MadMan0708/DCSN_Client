@@ -12,6 +12,7 @@ import cz.cuni.mff.bc.api.main.Task;
 import cz.cuni.mff.bc.api.main.TaskID;
 import cz.cuni.mff.bc.misc.CustomClassLoader;
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -41,7 +42,6 @@ public class CompUtils {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(folder, task.getUnicateID().getTaskName())))) {
             oos.writeObject(task);
             oos.flush();
-            oos.close();
         }
     }
 
@@ -55,17 +55,19 @@ public class CompUtils {
      * @throws ClassNotFoundException
      */
     public static Task deserialiseFromFile(File file, CustomClassLoader customCL) throws IOException, ClassNotFoundException {
+        Object o = null;
         try (FileInputStream fis = new FileInputStream(file); CustomObjectInputStream ois = new CustomObjectInputStream(fis, customCL)) {
-            Object o = ois.readObject();
-            fis.close();
-            ois.close();
-            if (o instanceof Task) {
-                return (Task) o;
-            } else {
-                throw new ClassNotFoundException();
+            try {
+                o = ois.readObject();
+            } catch (EOFException e) {
+                throw new IOException("aaaaaaaaaaaaaaaaaaaaaaaa" + e.getMessage());
             }
         }
-
+        if (o instanceof Task) {
+            return (Task) o;
+        } else {
+            throw new ClassNotFoundException();
+        }
     }
 
     /**

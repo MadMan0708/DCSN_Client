@@ -22,6 +22,15 @@ public class ClientCommands {
     private Client client;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
+    //debug
+    public void u(String[] params) {
+        upload(new String[]{"D:\\BC\\D.jar", "D:\\BC\\T.zip"});
+    }
+    //debug
+    public void s(String[] params){
+        startCalculation(params);
+    }
+
     /**
      * Constructor
      *

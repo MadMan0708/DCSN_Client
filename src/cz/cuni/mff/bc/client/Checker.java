@@ -4,6 +4,7 @@
  */
 package cz.cuni.mff.bc.client;
 
+import cz.cuni.mff.bc.api.main.CustomIO;
 import cz.cuni.mff.bc.misc.CustomClassLoader;
 import cz.cuni.mff.bc.client.computation.ProccessHolder;
 import cz.cuni.mff.bc.client.computation.IProcessHolder;
@@ -20,10 +21,11 @@ import java.nio.file.Files;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,29 +45,28 @@ public class Checker extends Thread {
     private HashMap<ProjectUID, File> tempJars;
     private final long sleepThreadTime = 10000;
     private IServer remoteService;
-    private int coreLimit = 3;
     private ExecutorService executor;
-    private Map<Future<Task>, IProcessHolder> mapping;
+    private ConcurrentHashMap<Future<Task>, IProcessHolder> mapping;
     private boolean calculationInProgress;
     private boolean receivingTasks;
     private CustomClassLoader clientCustClassLoader;
-    private static final Logger LOG = Logger.getLogger(Client.class.getName());
     private File tmpDir;
-    private String clientName;
+    private ClientParams clientParams;
+    private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
     /**
      * Constructor
      *
      * @param remoteService remote interface implementation
-     * @param clientName client's name
+     * @param clientParams client parameters
      * @param clientCustClassLoader client class loader
      */
-    public Checker(IServer remoteService, String clientName, CustomClassLoader clientCustClassLoader) {
+    public Checker(IServer remoteService, ClientParams clientParams, CustomClassLoader clientCustClassLoader) {
         this.tempJars = new HashMap<>();
-        this.executor = Executors.newFixedThreadPool(coreLimit);
+        this.executor = Executors.newFixedThreadPool(clientParams.getCores());
         this.remoteService = remoteService;
-        this.mapping = new HashMap<>();
-        this.clientName = clientName;
+        this.mapping = new ConcurrentHashMap<>();
+        this.clientParams = clientParams;
         this.clientCustClassLoader = clientCustClassLoader;
         try {
             tmpDir = Files.createTempDirectory("tasksJars").toFile();
@@ -97,7 +98,7 @@ public class Checker extends Thread {
      */
     public boolean cancelTaskCalculation(TaskID tsk) {
         Future<Task> del = null;
-        Set<Future<Task>> futures = mapping.keySet();
+        Set<Future<Task>> futures = new LinkedHashSet<>(mapping.keySet());
         for (Future<Task> future : futures) {
             if (mapping.get(future).getCurrentTaskID().equals(tsk)) {
                 if (future.cancel(true)) {
@@ -116,6 +117,9 @@ public class Checker extends Thread {
      */
     public void stopCalculation() {
         calculationInProgress = false;
+        for (File jar : tempJars.values()) {
+            CustomIO.createFolder(jar);
+        }
     }
 
     /**
@@ -139,12 +143,12 @@ public class Checker extends Thread {
      */
     public void terminateCurrentTasks() {
         executor.shutdown();
-        Set<Future<Task>> futures = mapping.keySet();
+        Set<Future<Task>> futures = new LinkedHashSet<>(mapping.keySet());
         for (Future<Task> future : futures) {
             mapping.get(future).killProcess();
             LOG.log(Level.INFO, "Calculation of {0} has been canceled", mapping.get(future).getCurrentTaskID().toString());
             try {
-                remoteService.cancelTaskOnClient(clientName, mapping.get(future).getCurrentTaskID());
+                remoteService.cancelTaskOnClient(clientParams.getClientName(), mapping.get(future).getCurrentTaskID());
             } catch (RemoteException e) {
                 LOG.log(Level.INFO, "Canceling taks from client problem: {0}", e.getMessage());
             }
@@ -157,7 +161,7 @@ public class Checker extends Thread {
      */
     public void startCalculation() {
         this.tempJars = new HashMap<>();
-        this.mapping = new HashMap<>();
+        this.mapping = new ConcurrentHashMap<>();
         calculationInProgress = true;
         receivingTasks = true;
         start();
@@ -168,7 +172,7 @@ public class Checker extends Thread {
         Task tsk;
         while (calculationInProgress) {
             if (receivingTasks) {
-                if (checkStates() < coreLimit) {
+                if (checkStates() < clientParams.getCores()) {
                     try {
                         if ((tsk = getTask()) != null) { // Check if there are tasks to calculate
                             IProcessHolder holder = new ProccessHolder(tsk, tempJars.get(tsk.getProjectUID()));
@@ -195,7 +199,7 @@ public class Checker extends Thread {
                     try {
                         Checker.sleep(sleepThreadTime);
                     } catch (InterruptedException e) {
-                        LOG.log(Level.CONFIG, "Waiting for computation of rest of the tasks");
+                        LOG.log(Level.CONFIG, "Waiting for computation of the rest of the tasks");
                     }
                 }
             }
@@ -204,18 +208,18 @@ public class Checker extends Thread {
 
     private int checkStates() {
         List<Future<Task>> del = new ArrayList<>();
-        Set<Future<Task>> futures = mapping.keySet();
+        Set<Future<Task>> futures = new LinkedHashSet<>(mapping.keySet());
         for (Future<Task> future : futures) {
             if (future.isDone()) {
                 del.add(future);
                 try {
                     Task tsk = (Task) future.get();
-                    remoteService.saveCompletedTask(clientName, tsk);
+                    remoteService.saveCompletedTask(clientParams.getClientName(), tsk);
                 } catch (ExecutionException e) {
                     LOG.log(Level.WARNING, "Problem during execution of task", ((Exception) e.getCause()).toString());
                     try {
                         // unassociate the task
-                        remoteService.cancelTaskOnClient(clientName, mapping.get(future).getCurrentTaskID());
+                        remoteService.cancelTaskOnClient(clientParams.getClientName(), mapping.get(future).getCurrentTaskID());
                         // marks project as corrupted
                         remoteService.markProjectAsCorrupted(mapping.get(future).getCurrentTaskID().getClientName(), mapping.get(future).getCurrentTaskID().getProjectName());
                     } catch (RemoteException e1) {
@@ -234,7 +238,11 @@ public class Checker extends Thread {
         for (Future<Task> future : del) {
             mapping.remove(future);
         }
-        return mapping.size();
+        int coresUsed = 0;
+        for (IProcessHolder holder : mapping.values()) {
+            coresUsed += holder.getCurrentTaskID().getCores();
+        }
+        return coresUsed;
     }
 
     private File downloadProjectJar(ProjectUID uid) throws IOException {
@@ -253,7 +261,7 @@ public class Checker extends Thread {
     }
 
     private Task getTask() throws RemoteException {
-        ProjectUID projectUID = remoteService.getProjectIdBeforeCalculation(clientName);
+        ProjectUID projectUID = remoteService.getProjectIdBeforeCalculation(clientParams.getClientName());
         if (projectUID != null) {
             try {
                 if (!tempJars.containsKey(projectUID)) {
@@ -268,7 +276,7 @@ public class Checker extends Thread {
             } catch (MalformedURLException e) {
                 LOG.log(Level.WARNING, "Path to temp file is incorrect: {0}", e.getMessage());
             }
-            return remoteService.getTask(clientName, projectUID);
+            return remoteService.getTask(clientParams.getClientName(), projectUID);
         } else {
             return null; // no more tasks to calculate on server
         }

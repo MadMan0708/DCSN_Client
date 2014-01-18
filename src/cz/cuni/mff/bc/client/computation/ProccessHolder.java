@@ -5,6 +5,7 @@
 package cz.cuni.mff.bc.client.computation;
 
 import cz.cuni.mff.bc.api.enums.TaskState;
+import cz.cuni.mff.bc.api.main.CustomIO;
 import cz.cuni.mff.bc.api.main.Task;
 import cz.cuni.mff.bc.api.main.TaskID;
 import cz.cuni.mff.bc.client.Client;
@@ -15,6 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -118,7 +120,7 @@ public class ProccessHolder implements IProcessHolder {
 
     @Override
     public Task call() throws Exception {
-        File tmp = Files.createTempDirectory("DCSN_tasks_").toFile();
+        File tmp = Files.createTempDirectory("DCSN_tasks_" + tsk.getUnicateID().getTaskName() + "_").toFile();
         CompUtils.createWorkerJar(new File(tmp, "worker.jar"));
         CompUtils.serialiseToFile(tsk, tmp);
         final Process p = startJVM(
@@ -136,6 +138,7 @@ public class ProccessHolder implements IProcessHolder {
             throw new ExecutionException("Problem in the client code: ", null);
         }
         tsk = CompUtils.deserialiseFromFile(new File(tmp, tsk.getUnicateID().getTaskName()), customCL);
+        CustomIO.deleteDirectory(tmp);
         tsk.setState(TaskState.COMPLETE);
         p.destroy();
         LOG.log(Level.INFO, "Task : {0} >> calculation completed", tsk.getUnicateID());

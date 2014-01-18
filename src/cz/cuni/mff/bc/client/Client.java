@@ -66,8 +66,8 @@ public class Client implements IConsole {
         logHandler.setLevel(Level.ALL);
         logHandler.addLogTarget(new FileLogger(new File("client.log")));
         LOG.addHandler(logHandler);
-        connector = new Connector();
         clientParams = new ClientParams(logHandler);
+        connector = new Connector(clientParams);
         commands = new ClientCommands(this);
     }
 
@@ -111,8 +111,9 @@ public class Client implements IConsole {
             @Override
             public void run() {
                 searchForServer();
+
             }
-          }.start();
+        }.start();
     }
 
     /**
@@ -245,7 +246,7 @@ public class Client implements IConsole {
      */
     public void connect() {
         try {
-            if (connector.connect(clientParams.getServerAddress(), clientParams.getServerPort(), clientParams.getClientName())) {
+            if (connector.connect()) {
                 standartRemoteProvider = new StandardRemoteProvider(connector.getRemoteService(), clientParams.getClientName(),
                         Paths.get(clientParams.getDownloadDir()), Paths.get(clientParams.getUploadDir()), LOG);
                 LOG.log(Level.INFO, "Connected to the server {0}:{1} with client ID {2}", new Object[]{clientParams.getServerAddress(), clientParams.getServerPort(), clientParams.getClientName()});

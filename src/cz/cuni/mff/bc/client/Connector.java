@@ -30,13 +30,18 @@ public class Connector {
     private IServer remoteService;
     private Environment env;
     private CustomClassLoader cl;
-    private String clientName;
     private Checker checker;
     private Timer timer;
     private long informPeriod = 1000;
+    private ClientParams clientParams;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
-    public Connector() {
+    /**
+     *Constructor
+     * @param clientParams client parameters
+     */
+    public Connector(ClientParams clientParams) {
+        this.clientParams = clientParams;
     }
 
     /**
@@ -76,7 +81,7 @@ public class Connector {
     }
 
     private void sendInformMessage(InformMessage message) throws RemoteException {
-        remoteService.sendInformMessage(clientName, message);
+        remoteService.sendInformMessage(clientParams.getClientName(), message);
     }
 
     private boolean autorizeClient(String clientName) throws RemoteException {
@@ -87,7 +92,7 @@ public class Connector {
                 // prepared for future, if server needs to manipulate with client
             });
             // set checker if the connection was successfull
-            this.checker = new Checker(remoteService, clientName, cl);
+            this.checker = new Checker(remoteService, clientParams, cl);
             return true;
         } else {
             return false;
@@ -95,23 +100,20 @@ public class Connector {
     }
 
     /**
-     * Connects the the server
+     * Connects the the server, takes parameters from actual client parameters
+     * object
      *
-     * @param address server address
-     * @param port server port
-     * @param clientName client's name
      * @return true if connection was successful, false otherwise
      * @throws RemoteException
      * @throws IOException
      */
-    public boolean connect(String address, int port, String clientName) throws RemoteException, IOException {
-        this.clientName = clientName;
+    public boolean connect() throws RemoteException, IOException {
         cl = new CustomClassLoader();
         env = new Environment();
 
-        remoteSession = env.newSessionConnector(address, port).connect();
+        remoteSession = env.newSessionConnector(clientParams.getServerAddress(), clientParams.getServerPort()).connect();
         remoteSession.setClassLoader(cl);
-        return autorizeClient(clientName);
+        return autorizeClient(clientParams.getClientName());
     }
 
     /**
@@ -145,7 +147,7 @@ public class Connector {
             if (!checker.isCalculationInProgress()) {
                 sendInformMessage(InformMessage.CALCULATION_ENDED);
             }
-            ArrayList<TaskID> taskToCancel = remoteService.sendTasksInCalculation(clientName, checker.getTasksInCalculation());
+            ArrayList<TaskID> taskToCancel = remoteService.sendTasksInCalculation(clientParams.getClientName(), checker.getTasksInCalculation());
             for (TaskID tsk : taskToCancel) {
                 checker.cancelTaskCalculation(tsk);
                 LOG.log(Level.INFO, "Task {0} is canceled by server purposes", tsk);
