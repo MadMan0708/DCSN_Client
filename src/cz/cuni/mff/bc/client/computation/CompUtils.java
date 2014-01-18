@@ -55,18 +55,8 @@ public class CompUtils {
      * @throws ClassNotFoundException
      */
     public static Task deserialiseFromFile(File file, CustomClassLoader customCL) throws IOException, ClassNotFoundException {
-        Object o = null;
-        try (FileInputStream fis = new FileInputStream(file); CustomObjectInputStream ois = new CustomObjectInputStream(fis, customCL)) {
-            try {
-                o = ois.readObject();
-            } catch (EOFException e) {
-                throw new IOException("aaaaaaaaaaaaaaaaaaaaaaaa" + e.getMessage());
-            }
-        }
-        if (o instanceof Task) {
-            return (Task) o;
-        } else {
-            throw new ClassNotFoundException();
+        try (CustomObjectInputStream ois = new CustomObjectInputStream(new FileInputStream(file), customCL)) {
+            return (Task) ois.readObject();
         }
     }
 
