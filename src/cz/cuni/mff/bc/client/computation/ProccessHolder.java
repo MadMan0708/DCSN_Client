@@ -11,6 +11,7 @@ import cz.cuni.mff.bc.client.Client;
 import cz.cuni.mff.bc.misc.CustomClassLoader;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -84,11 +85,11 @@ public class ProccessHolder implements IProcessHolder {
                 taskDir,
                 taskName);
         processBuilder.redirectErrorStream(redirectStream);
-        Process process = processBuilder.start();
+        Process p = processBuilder.start();
         LOG.log(Level.INFO, "Virtual machine for task {0} launched", tsk.getUnicateID());
         LOG.log(Level.INFO, "Task : {0} >> calculation started", tsk.getUnicateID());
         processBuilder.start();
-        return process;
+        return p;
     }
 
     /**
@@ -96,20 +97,20 @@ public class ProccessHolder implements IProcessHolder {
      *
      * @param process process with the task computation
      */
-    public void startProccessInputReadingThread(final Process process) {
+    public void startProccessInputReadingThread(final Process process, final InputStream inputStrem) {
         new Thread() {
             @Override
             public void run() {
                 try {
                     try (BufferedReader reader = new BufferedReader(
-                            new InputStreamReader(process.getInputStream()))) {
+                            new InputStreamReader(inputStrem))) {
                         String line = null;
                         while ((line = reader.readLine()) != null) {
                             LOG.log(Level.INFO, "Process: {0} >> {1}", new Object[]{process.toString(), line});
                         }
                     }
                 } catch (final Exception e) {
-                    LOG.log(Level.WARNING, "Coudln''t read from process {0} input stream", process.toString());
+                    LOG.log(Level.WARNING, "Coudln't read from process {0} input stream", process.toString());
                 }
             }
         }.start();
@@ -128,12 +129,15 @@ public class ProccessHolder implements IProcessHolder {
                 tsk.getUnicateID().getMemory(),
                 true);
         this.process = p;
-        startProccessInputReadingThread(p);
+
+        startProccessInputReadingThread(p, p.getInputStream());
+        startProccessInputReadingThread(p, p.getErrorStream());
         if (p.waitFor() != 0) {
             throw new ExecutionException("Problem in the client code: ", null);
         }
         tsk = CompUtils.deserialiseFromFile(new File(tmp, tsk.getUnicateID().getTaskName()), customCL);
         tsk.setState(TaskState.COMPLETE);
+        p.destroy();
         LOG.log(Level.INFO, "Task : {0} >> calculation completed", tsk.getUnicateID());
         return tsk;
     }

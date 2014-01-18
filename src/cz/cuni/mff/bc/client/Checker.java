@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -211,7 +212,7 @@ public class Checker extends Thread {
                     Task tsk = (Task) future.get();
                     remoteService.saveCompletedTask(clientName, tsk);
                 } catch (ExecutionException e) {
-                    LOG.log(Level.WARNING, "Problem during execution of task {0}", ((Exception) e.getCause()).toString());
+                    LOG.log(Level.WARNING, "Problem during execution of task", ((Exception) e.getCause()).toString());
                     try {
                         // unassociate the task
                         remoteService.cancelTaskOnClient(clientName, mapping.get(future).getCurrentTaskID());
@@ -224,6 +225,8 @@ public class Checker extends Thread {
                     LOG.log(Level.INFO, "Checker state has been interupted");
                 } catch (RemoteException e) {
                     LOG.log(Level.WARNING, "Problem during sending task to server: {0}", e.getMessage());
+                } catch (CancellationException e) {
+                    LOG.log(Level.INFO, "Problem with cancelation task: {0}", e.getMessage());
                 }
             }
         }

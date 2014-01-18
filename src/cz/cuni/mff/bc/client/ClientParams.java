@@ -154,7 +154,7 @@ public class ClientParams {
         if (cores > 0) {
             this.cores = cores;
             LOG.log(Level.INFO, "Number of cores allowed is now set to: {0}", cores);
-            propMan.setProperty("memory", cores + "");
+            propMan.setProperty("cores", cores + "");
         } else {
             throw new IllegalArgumentException();
         }

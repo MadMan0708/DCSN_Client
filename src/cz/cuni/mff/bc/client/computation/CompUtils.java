@@ -41,6 +41,7 @@ public class CompUtils {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(folder, task.getUnicateID().getTaskName())))) {
             oos.writeObject(task);
             oos.flush();
+            oos.close();
         }
     }
 
@@ -54,8 +55,10 @@ public class CompUtils {
      * @throws ClassNotFoundException
      */
     public static Task deserialiseFromFile(File file, CustomClassLoader customCL) throws IOException, ClassNotFoundException {
-        try (CustomObjectInputStream ois = new CustomObjectInputStream(new FileInputStream(file), customCL)) {
+        try (FileInputStream fis = new FileInputStream(file); CustomObjectInputStream ois = new CustomObjectInputStream(fis, customCL)) {
             Object o = ois.readObject();
+            fis.close();
+            ois.close();
             if (o instanceof Task) {
                 return (Task) o;
             } else {
