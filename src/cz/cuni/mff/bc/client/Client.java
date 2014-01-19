@@ -346,7 +346,11 @@ public class Client implements IConsole {
                 String message = new String(receivePacket.getData()).trim();
                 if (message.equals("DISCOVER_SERVER_RESPONSE")) {
                     // now we have server IP address
-                    commands.setServerAddress(new String[]{receivePacket.getAddress().toString()});
+                    String address = receivePacket.getAddress().toString();
+                    if (address.startsWith("/")) {
+                        address = address.substring(1);
+                    }
+                    commands.setServerAddress(new String[]{address});
                     connect();
                 }
             }
