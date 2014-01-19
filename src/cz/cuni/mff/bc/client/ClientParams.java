@@ -66,7 +66,7 @@ public class ClientParams {
     }
 
     private void setDefaultTemporaryDir() {
-        setTemporaryDir(System.getProperty("user.home") + File.separator + "DCSN_temporary");
+        setTemporaryDir(System.getProperty("java.io.tmpdir") + File.separator + "DCSN_temporary");
     }
 
     private void setDefaultCores() {
