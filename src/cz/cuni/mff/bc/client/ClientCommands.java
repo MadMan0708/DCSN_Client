@@ -99,7 +99,7 @@ public class ClientCommands {
      */
     public void getTemporaryDir(String[] params) {
         if (checkParamNum(0, params)) {
-            LOG.log(Level.INFO, "Temporary dir is set to : {0}", client.getClientParams().getTempDir());
+            LOG.log(Level.INFO, "Temporary dir is set to : {0}", client.getClientParams().getTemporaryDir());
         } else {
             LOG.log(Level.INFO, "Command has no parameters");
         }
@@ -112,7 +112,7 @@ public class ClientCommands {
      */
     public void setTemporaryDir(String[] params) {
         if (checkParamNum(1, params)) {
-            client.getClientParams().setTempDir(params[0]);
+            client.getClientParams().setTemporaryDir(params[0]);
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
             LOG.log(Level.INFO, "1: new temp dir");
