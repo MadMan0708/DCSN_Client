@@ -12,6 +12,7 @@ import cz.cuni.mff.bc.client.Client;
 import cz.cuni.mff.bc.misc.CustomClassLoader;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -115,7 +116,7 @@ public class ProccessHolder implements IProcessHolder {
                         }
                     }
                 } catch (final Exception e) {
-                    LOG.log(Level.WARNING, "Coudln't read from process {0} input stream", process.toString());
+                    LOG.log(Level.WARNING, "Coudln't read from process {0} input stream.", process.toString());
                 }
             }
         }.start();
@@ -123,7 +124,6 @@ public class ProccessHolder implements IProcessHolder {
 
     @Override
     public Task call() throws Exception {
-
         File tmp = Files.createTempDirectory(tempDir.toPath(), "task_" + tsk.getUnicateID().getTaskName() + "_").toFile();
         CustomIO.recursiveDeleteOnShutdownHook(tmp.toPath()); // if the file is not deleted immediatelly for example because of error in the task
         CompUtils.createWorkerJar(new File(tmp, "worker.jar"));
@@ -136,16 +136,17 @@ public class ProccessHolder implements IProcessHolder {
                 tsk.getUnicateID().getMemory(),
                 true);
         this.process = p;
-        startProccessInputReadingThread(p, p.getInputStream());
         startProccessInputReadingThread(p, p.getErrorStream());
-        if (p.waitFor() != 0) {
-            throw new ExecutionException("Problem in code written by author of the tasks: ", null);
-        } else {
+        if (p.waitFor() == 0) {
             tsk = CompUtils.deserialiseFromFile(new File(tmp, tsk.getUnicateID().getTaskName()), customCL);
             CustomIO.deleteDirectory(tmp);
             tsk.setState(TaskState.COMPLETE);
             LOG.log(Level.INFO, "Task : {0} >> calculation completed", tsk.getUnicateID());
             return tsk;
+        } else if (p.waitFor() == 1) {
+            throw new ExecutionException("Task : " + tsk.getUnicateID() + " >> Project of this task is corrupted: ", null);
+        } else {
+            throw new IOException("Task : " + tsk.getUnicateID() + " >> Local problem with task calculation");
         }
     }
 }

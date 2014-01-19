@@ -168,47 +168,41 @@ public class Checker extends Thread {
 
     @Override
     public void run() {
+        try {
+            getAndCalculateTasks();
+        } catch (RemoteException e) {
+            LOG.log(Level.WARNING, "Stopping the calculation because of the connection problem: {0}", e.getMessage());
+            stopCalculation();
+        } catch (InterruptedException e) {
+            LOG.log(Level.CONFIG, "Checker thread has been interrupted");
+        }
+    }
+
+    private void getAndCalculateTasks() throws RemoteException, InterruptedException {
         Task tsk;
         while (calculationInProgress) {
             if (receivingTasks) {
                 if (getCoresUsed() < clientParams.getCores()) {
-                    try {
-                        if ((tsk = getTask()) != null) { // Check if there are tasks to calculate
-                            IProcessHolder holder = new ProccessHolder(tsk, projectJars.get(tsk.getProjectUID()), new File(clientParams.getTemporaryDir()));
-                            Future<Task> submit = executor.submit(holder);
-                            mapping.put(submit, holder);
-                        } else { // no more tasks, sleep
-                            if (getCoresUsed() == 0) { // check if all tasks has been sent to the server
-                                try {
-                                    LOG.log(Level.INFO, "Checker thread is going to sleep, no tasks.");
-                                    Checker.sleep(sleepThreadTime);
-                                } catch (InterruptedException e) {
-                                    LOG.log(Level.CONFIG, "Checker thread has been interrupted");
-                                }
-                            }
+                    if ((tsk = getTaskToCalculate()) != null) { // Check if there are tasks to calculate
+                        IProcessHolder holder = new ProccessHolder(tsk, projectJars.get(tsk.getProjectUID()), new File(clientParams.getTemporaryDir()));
+                        Future<Task> submit = executor.submit(holder);
+                        mapping.put(submit, holder);
+                    } else { // no more tasks, sleep
+                        if (getCoresUsed() == 0) { // check if all tasks has been sent to the server
+                            LOG.log(Level.INFO, "No tasks to calculate, waiting...");
+                            Checker.sleep(sleepThreadTime);
                         }
-                    } catch (RemoteException e) {
-                        LOG.log(Level.WARNING, "Loading tasks from server: Task could not be obtained : {0}", e.getMessage());
-                        LOG.log(Level.INFO, "Stopping the calculation");
-                        stopCalculation();
                     }
                 } else {
-                    try {
-                        LOG.log(Level.INFO, "Waiting for free capacity for next tasks.");
-                        Checker.sleep(sleepThreadTime);
-                    } catch (InterruptedException e) {
-                        LOG.log(Level.CONFIG, "Checker thread has been interrupted");
-                    }
+                    LOG.log(Level.INFO, "Waiting for computation capacity for next tasks.");
+                    Checker.sleep(sleepThreadTime);
                 }
             } else {
+                LOG.log(Level.INFO, "Waiting for the rest of tasks to be finished");
                 if (getCoresUsed() == 0) {
                     calculationInProgress = false;
                 } else {
-                    try {
-                        Checker.sleep(sleepThreadTime);
-                    } catch (InterruptedException e) {
-                        LOG.log(Level.CONFIG, "Waiting for computation of the rest of the tasks");
-                    }
+                    Checker.sleep(sleepThreadTime);
                 }
             }
             sendCompletedIfAny();
@@ -226,7 +220,7 @@ public class Checker extends Thread {
         return completed;
     }
 
-    private void sendCompletedIfAny() {
+    private void sendCompletedIfAny() throws RemoteException {
         List<Future<Task>> completedFutures = getCompletedFutures();
         for (Future<Task> future : completedFutures) {
             TaskID inTheHolder = mapping.get(future).getCurrentTaskID();
@@ -236,21 +230,22 @@ public class Checker extends Thread {
                 remoteService.saveCompletedTask(clientParams.getClientName(), tsk);
                 LOG.log(Level.INFO, "Task : {0} >> sent to the server", tsk.getUnicateID());
             } catch (ExecutionException e) {
-                LOG.log(Level.WARNING, "Problem during execution of task", ((Exception) e.getCause()).toString());
-                try {
+                Throwable ee = e.getCause();
+                if (ee instanceof ExecutionException) {
+                    LOG.log(Level.WARNING, "Problem during task execution: {0}", ee.getMessage());
                     // unassociate the task
                     remoteService.cancelTaskOnClient(clientParams.getClientName(), inTheHolder);
                     // marks project as corrupted
                     remoteService.markProjectAsCorrupted(inTheHolder.getClientName(), inTheHolder.getProjectName());
-                } catch (RemoteException e1) {
-                    LOG.log(Level.WARNING, "Connection problem during marking project as corrupted: {0}", e1.getMessage());
+                }
+                if (ee instanceof IOException) {
+                    LOG.log(Level.WARNING, "{0}", ee.getMessage());
+                    remoteService.cancelTaskOnClient(clientParams.getClientName(), inTheHolder);
                 }
             } catch (InterruptedException e) {
-                LOG.log(Level.INFO, "Checker state has been interupted");
-            } catch (RemoteException e) {
-                LOG.log(Level.WARNING, "Problem during sending task to server: {0}", e.getMessage());
+                LOG.log(Level.INFO, "Checker has been interupted");
             } catch (CancellationException e) {
-                LOG.log(Level.INFO, "Problem with cancelation task: {0}", e.getMessage());
+                LOG.log(Level.INFO, "Problem with the task cancelation: {0}", e.getMessage());
             }
         }
     }
@@ -278,7 +273,7 @@ public class Checker extends Thread {
 
     }
 
-    private Task getTask() throws RemoteException {
+    private Task getTaskToCalculate() throws RemoteException {
         ProjectUID projectUID = remoteService.getProjectIdBeforeCalculation(clientParams.getClientName());
         if (projectUID != null) {
             try {
