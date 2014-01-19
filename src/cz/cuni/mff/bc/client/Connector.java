@@ -37,7 +37,8 @@ public class Connector {
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
     /**
-     *Constructor
+     * Constructor
+     *
      * @param clientParams client parameters
      */
     public Connector(ClientParams clientParams) {
@@ -154,6 +155,8 @@ public class Connector {
             }
         } catch (RemoteException e) {
             LOG.log(Level.WARNING, "Server couldn't be informed due to network error");
+            LOG.log(Level.INFO, "Stopping the calculation");
+            checker.stopCalculation();
         }
     }
 

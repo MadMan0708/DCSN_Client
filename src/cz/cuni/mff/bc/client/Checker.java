@@ -96,7 +96,7 @@ public class Checker extends Thread {
      * @return true if task was mapping contained the future with this task,
      * false otherwise
      */
-    public boolean cancelTaskCalculation(TaskID tsk) {
+    public synchronized boolean cancelTaskCalculation(TaskID tsk) {
         Future<Task> del = null;
         Set<Future<Task>> futures = new LinkedHashSet<>(mapping.keySet());
         for (Future<Task> future : futures) {
@@ -172,14 +172,14 @@ public class Checker extends Thread {
         Task tsk;
         while (calculationInProgress) {
             if (receivingTasks) {
-                if (checkStates() < clientParams.getCores()) {
+                if (getCoresUsed() < clientParams.getCores()) {
                     try {
                         if ((tsk = getTask()) != null) { // Check if there are tasks to calculate
                             IProcessHolder holder = new ProccessHolder(tsk, tempJars.get(tsk.getProjectUID()));
                             Future<Task> submit = executor.submit(holder);
                             mapping.put(submit, holder);
                         } else { // no more tasks, sleep
-                            if (checkStates() == 0) { // check if all tasks has been sent to the server
+                            if (getCoresUsed() == 0) { // check if all tasks has been sent to the server
                                 try {
                                     LOG.log(Level.INFO, "Checker thread is going to sleep, no tasks.");
                                     Checker.sleep(sleepThreadTime);
@@ -190,10 +190,19 @@ public class Checker extends Thread {
                         }
                     } catch (RemoteException e) {
                         LOG.log(Level.WARNING, "Loading tasks from server: Task could not be obtained : {0}", e.getMessage());
+                        LOG.log(Level.INFO, "Stopping the calculation");
+                        stopCalculation();
+                    }
+                } else {
+                    try {
+                        LOG.log(Level.INFO, "Waiting for free capacity for next tasks.");
+                        Checker.sleep(sleepThreadTime);
+                    } catch (InterruptedException e) {
+                        LOG.log(Level.CONFIG, "Checker thread has been interrupted");
                     }
                 }
             } else {
-                if (checkStates() == 0) {
+                if (getCoresUsed() == 0) {
                     calculationInProgress = false;
                 } else {
                     try {
@@ -203,41 +212,51 @@ public class Checker extends Thread {
                     }
                 }
             }
+            sendCompletedIfAny();
         }
     }
 
-    private int checkStates() {
-        List<Future<Task>> del = new ArrayList<>();
+    private List<Future<Task>> getCompletedFutures() {
+        List<Future<Task>> completed = new ArrayList<>();
         Set<Future<Task>> futures = new LinkedHashSet<>(mapping.keySet());
         for (Future<Task> future : futures) {
             if (future.isDone()) {
-                del.add(future);
-                try {
-                    Task tsk = (Task) future.get();
-                    remoteService.saveCompletedTask(clientParams.getClientName(), tsk);
-                } catch (ExecutionException e) {
-                    LOG.log(Level.WARNING, "Problem during execution of task", ((Exception) e.getCause()).toString());
-                    try {
-                        // unassociate the task
-                        remoteService.cancelTaskOnClient(clientParams.getClientName(), mapping.get(future).getCurrentTaskID());
-                        // marks project as corrupted
-                        remoteService.markProjectAsCorrupted(mapping.get(future).getCurrentTaskID().getClientName(), mapping.get(future).getCurrentTaskID().getProjectName());
-                    } catch (RemoteException e1) {
-                        LOG.log(Level.WARNING, "Connection problem during marking project as corrupted: {0}", e1.getMessage());
-                    }
-                } catch (InterruptedException e) {
-                    LOG.log(Level.INFO, "Checker state has been interupted");
-                } catch (RemoteException e) {
-                    LOG.log(Level.WARNING, "Problem during sending task to server: {0}", e.getMessage());
-                } catch (CancellationException e) {
-                    LOG.log(Level.INFO, "Problem with cancelation task: {0}", e.getMessage());
-                }
+                completed.add(future);
             }
         }
-        // delete complete futures
-        for (Future<Task> future : del) {
+        return completed;
+    }
+
+    private void sendCompletedIfAny() {
+        List<Future<Task>> completedFutures = getCompletedFutures();
+        for (Future<Task> future : completedFutures) {
+            TaskID inTheHolder = mapping.get(future).getCurrentTaskID();
             mapping.remove(future);
+            try {
+                Task tsk = (Task) future.get();
+                remoteService.saveCompletedTask(clientParams.getClientName(), tsk);
+                LOG.log(Level.INFO, "Task : {0} >> sent to the server", tsk.getUnicateID());
+            } catch (ExecutionException e) {
+                LOG.log(Level.WARNING, "Problem during execution of task", ((Exception) e.getCause()).toString());
+                try {
+                    // unassociate the task
+                    remoteService.cancelTaskOnClient(clientParams.getClientName(), inTheHolder);
+                    // marks project as corrupted
+                    remoteService.markProjectAsCorrupted(inTheHolder.getClientName(), inTheHolder.getProjectName());
+                } catch (RemoteException e1) {
+                    LOG.log(Level.WARNING, "Connection problem during marking project as corrupted: {0}", e1.getMessage());
+                }
+            } catch (InterruptedException e) {
+                LOG.log(Level.INFO, "Checker state has been interupted");
+            } catch (RemoteException e) {
+                LOG.log(Level.WARNING, "Problem during sending task to server: {0}", e.getMessage());
+            } catch (CancellationException e) {
+                LOG.log(Level.INFO, "Problem with cancelation task: {0}", e.getMessage());
+            }
         }
+    }
+
+    private int getCoresUsed() {
         int coresUsed = 0;
         for (IProcessHolder holder : mapping.values()) {
             coresUsed += holder.getCurrentTaskID().getCores();

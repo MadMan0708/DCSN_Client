@@ -89,8 +89,8 @@ public class ProccessHolder implements IProcessHolder {
         processBuilder.redirectErrorStream(redirectStream);
         Process p = processBuilder.start();
         LOG.log(Level.INFO, "Virtual machine for task {0} launched", tsk.getUnicateID());
-        LOG.log(Level.INFO, "Task : {0} >> calculation started", tsk.getUnicateID());
         processBuilder.start();
+        LOG.log(Level.INFO, "Task : {0} >> calculation started", tsk.getUnicateID());
         return p;
     }
 
@@ -120,7 +120,7 @@ public class ProccessHolder implements IProcessHolder {
 
     @Override
     public Task call() throws Exception {
-        File tmp = Files.createTempDirectory("DCSN_tasks_" + tsk.getUnicateID().getTaskName() + "_").toFile();
+       /* File tmp = Files.createTempDirectory("DCSN_tasks_" + tsk.getUnicateID().getTaskName() + "_").toFile();
         CompUtils.createWorkerJar(new File(tmp, "worker.jar"));
         CompUtils.serialiseToFile(tsk, tmp);
         final Process p = startJVM(
@@ -131,16 +131,20 @@ public class ProccessHolder implements IProcessHolder {
                 tsk.getUnicateID().getMemory(),
                 true);
         this.process = p;
-
         startProccessInputReadingThread(p, p.getInputStream());
         startProccessInputReadingThread(p, p.getErrorStream());
         if (p.waitFor() != 0) {
-            throw new ExecutionException("Problem in the client code: ", null);
+            throw new ExecutionException("Problem in code written by author of the tasks: ", null);
+        } else {
+            tsk = CompUtils.deserialiseFromFile(new File(tmp, tsk.getUnicateID().getTaskName()), customCL);
+            CustomIO.deleteDirectory(tmp);
+            tsk.setState(TaskState.COMPLETE);
+
+            LOG.log(Level.INFO, "Task : {0} >> calculation completed", tsk.getUnicateID());
         }
-        tsk = CompUtils.deserialiseFromFile(new File(tmp, tsk.getUnicateID().getTaskName()), customCL);
-        CustomIO.deleteDirectory(tmp);
-        tsk.setState(TaskState.COMPLETE);
-        p.destroy();
+        return tsk;
+         */
+        tsk.calculate();
         LOG.log(Level.INFO, "Task : {0} >> calculation completed", tsk.getUnicateID());
         return tsk;
     }

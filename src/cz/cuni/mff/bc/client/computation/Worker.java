@@ -19,7 +19,7 @@ public class Worker {
     private static CustomClassLoader customCL;
 
     /**
-     * Main entry fro the task calculation itself
+     * Main entry for the task calculation itself
      *
      * @param args arguments to specify task which will be calculated
      */
@@ -28,8 +28,11 @@ public class Worker {
             customCL = new CustomClassLoader();
             customCL.addNewUrl(new File(args[0]).toURI().toURL());
             Task tsk = CompUtils.deserialiseFromFile(new File(args[1], args[2]), customCL);
-
+            if (tsk == null) {
+                System.out.println("task je null");
+            }
             tsk.calculate();
+
             CompUtils.serialiseToFile(tsk, new File(args[1]));
 
 
