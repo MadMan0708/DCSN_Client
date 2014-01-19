@@ -93,6 +93,7 @@ public class ProccessHolder implements IProcessHolder {
         processBuilder.redirectErrorStream(redirectStream);
         Process p = processBuilder.start();
         LOG.log(Level.INFO, "Virtual machine for task {0} launched", tsk.getUnicateID());
+        startProccessInputReadingThread(p, p.getErrorStream());
         processBuilder.start();
         LOG.log(Level.INFO, "Task : {0} >> calculation started", tsk.getUnicateID());
         return p;
@@ -108,11 +109,20 @@ public class ProccessHolder implements IProcessHolder {
             @Override
             public void run() {
                 try {
-                    try (BufferedReader reader = new BufferedReader(
-                            new InputStreamReader(inputStrem))) {
-                        String line = null;
-                        while ((line = reader.readLine()) != null) {
-                            LOG.log(Level.INFO, "Process: {0} >> {1}", new Object[]{process.toString(), line});
+                    boolean finished = false;
+                    while (!finished) {
+                        try {
+                            process.exitValue();
+                            finished = true;
+                        } catch (IllegalThreadStateException e) {
+                            finished = false;
+                        }
+                        try (BufferedReader reader = new BufferedReader(
+                                new InputStreamReader(inputStrem))) {
+                            String line = null;
+                            while ((line = reader.readLine()) != null) {
+                                LOG.log(Level.INFO, "Process: {0} >> {1}", new Object[]{process.toString(), line});
+                            }
                         }
                     }
                 } catch (final Exception e) {
@@ -128,22 +138,21 @@ public class ProccessHolder implements IProcessHolder {
         CustomIO.recursiveDeleteOnShutdownHook(tmp.toPath()); // if the file is not deleted immediatelly for example because of error in the task
         CompUtils.createWorkerJar(new File(tmp, "worker.jar"));
         CompUtils.serialiseToFile(tsk, tmp);
-        final Process p = startJVM(
+        this.process = startJVM(
                 classPath.getAbsolutePath(),
                 new File(tmp, "worker.jar").getAbsolutePath(),
                 tmp.getAbsolutePath(),
                 tsk.getUnicateID().getTaskName(),
                 tsk.getUnicateID().getMemory(),
                 true);
-        this.process = p;
-        startProccessInputReadingThread(p, p.getErrorStream());
-        if (p.waitFor() == 0) {
+        
+        if (process.waitFor() == 0) {
             tsk = CompUtils.deserialiseFromFile(new File(tmp, tsk.getUnicateID().getTaskName()), customCL);
             CustomIO.deleteDirectory(tmp);
             tsk.setState(TaskState.COMPLETE);
             LOG.log(Level.INFO, "Task : {0} >> calculation completed", tsk.getUnicateID());
             return tsk;
-        } else if (p.waitFor() == 1) {
+        } else if (process.waitFor() == 1) {
             throw new ExecutionException("Task : " + tsk.getUnicateID() + " >> Project of this task is corrupted: ", null);
         } else {
             throw new IOException("Task : " + tsk.getUnicateID() + " >> Local problem with task calculation");

@@ -39,10 +39,10 @@ public class CompUtils {
      * @throws IOException
      */
     public static void serialiseToFile(Task task, File folder) throws IOException {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(folder, task.getUnicateID().getTaskName())))) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(folder, task.getUnicateID().getTaskName() + ".tmp")))) {
             oos.writeObject(task);
-            oos.flush();
         }
+        new File(folder, task.getUnicateID().getTaskName() + ".tmp").renameTo(new File(folder, task.getUnicateID().getTaskName()));
     }
 
     /**
