@@ -9,6 +9,7 @@ import cz.cuni.mff.bc.api.main.CustomIO;
 import java.io.File;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,7 +19,7 @@ import java.util.logging.Logger;
  * @author Jakub Hava
  */
 public class ClientCommands {
-    
+
     private Client client;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
@@ -469,7 +470,7 @@ public class ClientCommands {
     public void list(String[] params) {
         if (client.isConnected()) {
             if (checkParamNum(1, params)) {
-                
+
                 switch (params[0]) {
                     case "all":
                         client.getStandardRemoteProvider().printAllProjects();
@@ -603,7 +604,7 @@ public class ClientCommands {
     public void download(String[] params) {
         if (client.isConnected()) {
             if (checkParamNum(1, params)) {
-                client.getStandardRemoteProvider().download(params[0], new File(client.getClientParams().getDownloadDir(), params[0] + ".zip"));
+                client.getStandardRemoteProvider().download(params[0], Paths.get(client.getClientParams().getDownloadDir().toString(), params[0] + ".zip"));
             } else {
                 LOG.log(Level.INFO, "Expected parameters: 1");
                 LOG.log(Level.INFO, "1: Project name");

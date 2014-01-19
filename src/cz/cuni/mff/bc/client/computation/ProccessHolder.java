@@ -148,7 +148,7 @@ public class ProccessHolder implements IProcessHolder {
         
         if (process.waitFor() == 0) {
             tsk = CompUtils.deserialiseFromFile(new File(tmp, tsk.getUnicateID().getTaskName()), customCL);
-            CustomIO.deleteDirectory(tmp);
+            CustomIO.deleteDirectory(tmp.toPath());
             tsk.setState(TaskState.COMPLETE);
             LOG.log(Level.INFO, "Task : {0} >> calculation completed", tsk.getUnicateID());
             return tsk;

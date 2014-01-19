@@ -70,7 +70,8 @@ public class Checker extends Thread {
         this.clientParams = clientParams;
         this.clientCustClassLoader = clientCustClassLoader;
         try {
-            baseJarDir = Files.createDirectory(Paths.get(clientParams.getTemporaryDir(), "project_jars")).toFile();
+
+            baseJarDir = Files.createDirectory(Paths.get(clientParams.getTemporaryDir().toString(), "project_jars")).toFile();
             CustomIO.recursiveDeleteOnShutdownHook(baseJarDir.toPath());
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Can't create temp directory: {0}", e.getMessage());
@@ -184,7 +185,7 @@ public class Checker extends Thread {
             if (receivingTasks) {
                 if (getCoresUsed() < clientParams.getCores()) {
                     if ((tsk = getTaskToCalculate()) != null) { // Check if there are tasks to calculate
-                        IProcessHolder holder = new ProccessHolder(tsk, projectJars.get(tsk.getProjectUID()), new File(clientParams.getTemporaryDir()));
+                        IProcessHolder holder = new ProccessHolder(tsk, projectJars.get(tsk.getProjectUID()), clientParams.getTemporaryDir().toFile());
                         Future<Task> submit = executor.submit(holder);
                         mapping.put(submit, holder);
                     } else { // no more tasks, sleep

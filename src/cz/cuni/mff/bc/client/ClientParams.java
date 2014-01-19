@@ -8,6 +8,7 @@ import cz.cuni.mff.bc.misc.PropertiesManager;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,9 +26,9 @@ public class ClientParams {
     private String clientName;
     private String serverAddress;
     private int serverPort;
-    private String downloadDir;
-    private String uploadDir;
-    private String tempDir;
+    private Path downloadDir;
+    private Path uploadDir;
+    private Path tempDir;
     private int memory;
     private int cores;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
@@ -197,7 +198,7 @@ public class ClientParams {
      *
      * @return temporary directory
      */
-    public String getTemporaryDir() {
+    public Path getTemporaryDir() {
         return tempDir;
     }
 
@@ -211,15 +212,15 @@ public class ClientParams {
     public boolean setTemporaryDir(String dir) {
         File f = new File(dir);
         if (f.exists() && f.isDirectory()) {
-            tempDir = f.getAbsolutePath();
+            tempDir = f.toPath().toAbsolutePath();
             LOG.log(Level.INFO, "Temporary dir is set to: {0}", tempDir);
-            propMan.setProperty("tempDir", tempDir);
+            propMan.setProperty("tempDir", tempDir.toString());
             return true;
         } else {
             if (f.mkdirs()) {
-                tempDir = f.getAbsolutePath();
+                tempDir = f.toPath().toAbsolutePath();
                 LOG.log(Level.INFO, "Temporary dir is set to: {0}", tempDir);
-                propMan.setProperty("tempDir", tempDir);
+                propMan.setProperty("tempDir", tempDir.toString());
                 return true;
             } else {
                 LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
@@ -232,7 +233,7 @@ public class ClientParams {
      *
      * @return download directory
      */
-    public String getDownloadDir() {
+    public Path getDownloadDir() {
         return downloadDir;
     }
 
@@ -246,15 +247,15 @@ public class ClientParams {
     public boolean setDownloadDir(String dir) {
         File f = new File(dir);
         if (f.exists() && f.isDirectory()) {
-            downloadDir = f.getAbsolutePath();
+            downloadDir = f.toPath().toAbsolutePath();
             LOG.log(Level.INFO, "Download dir is set to: {0}", downloadDir);
-            propMan.setProperty("downloadDir", downloadDir);
+            propMan.setProperty("downloadDir", downloadDir.toString());
             return true;
         } else {
             if (f.mkdirs()) {
-                downloadDir = f.getAbsolutePath();
+                downloadDir = f.toPath().toAbsolutePath();
                 LOG.log(Level.INFO, "Download dir is set to: {0}", downloadDir);
-                propMan.setProperty("downloadDir", downloadDir);
+                propMan.setProperty("downloadDir", downloadDir.toString());
                 return true;
             } else {
                 LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
@@ -272,15 +273,15 @@ public class ClientParams {
     public boolean setUploadDir(String dir) {
         File f = new File(dir);
         if (f.exists() && f.isDirectory()) {
-            uploadDir = f.getAbsolutePath();
+            uploadDir = f.toPath().toAbsolutePath();
             LOG.log(Level.INFO, "Upload dir is set to: {0}", uploadDir);
-            propMan.setProperty("uploadDir", uploadDir);
+            propMan.setProperty("uploadDir", uploadDir.toString());
             return true;
         } else {
             if (f.mkdirs()) {
-                uploadDir = f.getAbsolutePath();
+                uploadDir = f.toPath().toAbsolutePath();
                 LOG.log(Level.INFO, "Upload dir is set to: {0}", uploadDir);
-                propMan.setProperty("uploadDir", uploadDir);
+                propMan.setProperty("uploadDir", uploadDir.toString());
                 return true;
             } else {
                 LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
@@ -311,7 +312,7 @@ public class ClientParams {
      *
      * @return upload directory
      */
-    public String getUploadDir() {
+    public Path getUploadDir() {
         return uploadDir;
     }
 

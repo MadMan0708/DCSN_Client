@@ -109,7 +109,7 @@ public class Client implements IConsole {
     public void initialise() {
         clientParams.initialisesParameters();
         deleteContentOfTempDirectory();
-        CustomIO.recursiveDeleteOnShutdownHook(new File(clientParams.getTemporaryDir()).toPath()); // set folder to be deleted at the end
+        CustomIO.recursiveDeleteOnShutdownHook(clientParams.getTemporaryDir()); // set folder to be deleted at the end
         new Thread() {
             @Override
             public void run() {
@@ -123,9 +123,9 @@ public class Client implements IConsole {
      * Deletes content of temporary directory
      */
     private void deleteContentOfTempDirectory() {
-        File[] files = new File(clientParams.getTemporaryDir()).listFiles();
+        File[] files = clientParams.getTemporaryDir().toFile().listFiles();
         for (File file : files) {
-            CustomIO.deleteDirectory(file);
+            CustomIO.deleteDirectory(file.toPath());
         }
     }
 
@@ -171,7 +171,7 @@ public class Client implements IConsole {
                     @Override
                     public void run() {
                         commander.start(new StandardRemoteProvider(connector.getRemoteService(), clientParams.getClientName(),
-                                Paths.get(clientParams.getDownloadDir()), Paths.get(clientParams.getUploadDir()), currentJar, LOG));
+                                clientParams.getDownloadDir(), clientParams.getUploadDir(), currentJar, LOG));
                     }
                 });
             } catch (InstantiationException | MalformedURLException | ClassNotFoundException | IllegalAccessException | SecurityException e) {
@@ -196,7 +196,8 @@ public class Client implements IConsole {
     public Path getUploadFileLocation(String pathToFile) throws IllegalArgumentException {
         Path path = Paths.get(pathToFile);
         if (!pathToFile.contains(File.separator)) {
-            return new File(clientParams.getUploadDir(), path.toFile().getName()).toPath();
+            return Paths.get(clientParams.getUploadDir().toString(), path.toFile().getName());
+
         } else {
             return path;
         }
@@ -261,7 +262,7 @@ public class Client implements IConsole {
         try {
             if (connector.connect()) {
                 standartRemoteProvider = new StandardRemoteProvider(connector.getRemoteService(), clientParams.getClientName(),
-                        Paths.get(clientParams.getDownloadDir()), Paths.get(clientParams.getUploadDir()), Paths.get(clientParams.getTemporaryDir()), LOG);
+                        clientParams.getDownloadDir(), clientParams.getUploadDir(), clientParams.getTemporaryDir(), LOG);
                 LOG.log(Level.INFO, "Connected to the server {0}:{1} with client ID {2}", new Object[]{clientParams.getServerAddress(), clientParams.getServerPort(), clientParams.getClientName()});
                 standartRemoteProvider.hasClientTasksInProgress();
                 standartRemoteProvider.setCoresLimit(clientParams.getCores());
