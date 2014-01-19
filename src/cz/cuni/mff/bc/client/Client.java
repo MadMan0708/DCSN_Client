@@ -7,6 +7,7 @@ package cz.cuni.mff.bc.client;
 import cz.cuni.mff.bc.misc.IConsole;
 import cz.cuni.mff.bc.misc.GConsole;
 import cz.cuni.mff.bc.api.main.Commander;
+import cz.cuni.mff.bc.api.main.CustomIO;
 import cz.cuni.mff.bc.api.main.JarAPI;
 import cz.cuni.mff.bc.api.main.StandardRemoteProvider;
 import cz.cuni.mff.bc.client.logging.CustomFormater;
@@ -107,6 +108,8 @@ public class Client implements IConsole {
      */
     public void initialise() {
         clientParams.initialisesParameters();
+        deleteContentOfTempDirectory();
+        CustomIO.recursiveDeleteOnShutdownHook(new File(clientParams.getTemporaryDir()).toPath()); // set folder to be deleted at the end
         new Thread() {
             @Override
             public void run() {
@@ -114,6 +117,16 @@ public class Client implements IConsole {
 
             }
         }.start();
+    }
+
+    /*
+     * Deletes content of temporary directory
+     */
+    private void deleteContentOfTempDirectory() {
+        File[] files = new File(clientParams.getTemporaryDir()).listFiles();
+        for (File file : files) {
+            CustomIO.deleteDirectory(file);
+        }
     }
 
     /**
@@ -248,7 +261,7 @@ public class Client implements IConsole {
         try {
             if (connector.connect()) {
                 standartRemoteProvider = new StandardRemoteProvider(connector.getRemoteService(), clientParams.getClientName(),
-                        Paths.get(clientParams.getDownloadDir()), Paths.get(clientParams.getUploadDir()), LOG);
+                        Paths.get(clientParams.getDownloadDir()), Paths.get(clientParams.getUploadDir()), Paths.get(clientParams.getTemporaryDir()), LOG);
                 LOG.log(Level.INFO, "Connected to the server {0}:{1} with client ID {2}", new Object[]{clientParams.getServerAddress(), clientParams.getServerPort(), clientParams.getClientName()});
                 standartRemoteProvider.hasClientTasksInProgress();
                 standartRemoteProvider.setCoresLimit(clientParams.getCores());

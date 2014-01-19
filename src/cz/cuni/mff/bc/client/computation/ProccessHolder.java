@@ -31,6 +31,7 @@ public class ProccessHolder implements IProcessHolder {
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
     private Task tsk;
     private File classPath;
+    private File tempDir;
     private CustomClassLoader customCL;
     private Process process = null;
 
@@ -39,10 +40,12 @@ public class ProccessHolder implements IProcessHolder {
      *
      * @param tsk Task to be calculated
      * @param classPath class path
+     * @param tempDir temporary directory
      */
-    public ProccessHolder(Task tsk, File classPath) {
+    public ProccessHolder(Task tsk, File classPath, File tempDir) {
         this.tsk = tsk;
         this.classPath = classPath;
+        this.tempDir = tempDir;
         customCL = new CustomClassLoader();
         try {
             customCL.addNewUrl(classPath.toURI().toURL());
@@ -120,7 +123,8 @@ public class ProccessHolder implements IProcessHolder {
 
     @Override
     public Task call() throws Exception {
-        File tmp = Files.createTempDirectory("DCSN_task_" + tsk.getUnicateID().getTaskName() + "_").toFile();
+
+        File tmp = Files.createTempDirectory(tempDir.toPath(), "task_" + tsk.getUnicateID().getTaskName() + "_").toFile();
         CustomIO.recursiveDeleteOnShutdownHook(tmp.toPath()); // if the file is not deleted immediatelly for example because of error in the task
         CompUtils.createWorkerJar(new File(tmp, "worker.jar"));
         CompUtils.serialiseToFile(tsk, tmp);

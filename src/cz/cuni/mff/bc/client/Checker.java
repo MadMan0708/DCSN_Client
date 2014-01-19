@@ -17,11 +17,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,7 +42,7 @@ import org.cojen.dirmi.Pipe;
  * @author Jakub Hava
  */
 public class Checker extends Thread {
-    
+
     private HashMap<ProjectUID, File> projectJars;
     private final long sleepThreadTime = 10000;
     private IServer remoteService;
@@ -57,7 +54,7 @@ public class Checker extends Thread {
     private File baseJarDir;
     private ClientParams clientParams;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
-    
+
     /**
      * Constructor
      *
@@ -73,7 +70,7 @@ public class Checker extends Thread {
         this.clientParams = clientParams;
         this.clientCustClassLoader = clientCustClassLoader;
         try {
-            baseJarDir = Files.createTempDirectory("DCSN_project_jars").toFile();
+            baseJarDir = Files.createDirectory(Paths.get(clientParams.getTemporaryDir(), "project_jars")).toFile();
             CustomIO.recursiveDeleteOnShutdownHook(baseJarDir.toPath());
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Can't create temp directory: {0}", e.getMessage());
@@ -168,7 +165,7 @@ public class Checker extends Thread {
         receivingTasks = true;
         start();
     }
-    
+
     @Override
     public void run() {
         Task tsk;
@@ -177,7 +174,7 @@ public class Checker extends Thread {
                 if (getCoresUsed() < clientParams.getCores()) {
                     try {
                         if ((tsk = getTask()) != null) { // Check if there are tasks to calculate
-                            IProcessHolder holder = new ProccessHolder(tsk, projectJars.get(tsk.getProjectUID()));
+                            IProcessHolder holder = new ProccessHolder(tsk, projectJars.get(tsk.getProjectUID()), new File(clientParams.getTemporaryDir()));
                             Future<Task> submit = executor.submit(holder);
                             mapping.put(submit, holder);
                         } else { // no more tasks, sleep
@@ -217,7 +214,7 @@ public class Checker extends Thread {
             sendCompletedIfAny();
         }
     }
-    
+
     private List<Future<Task>> getCompletedFutures() {
         List<Future<Task>> completed = new ArrayList<>();
         Set<Future<Task>> futures = new LinkedHashSet<>(mapping.keySet());
@@ -228,7 +225,7 @@ public class Checker extends Thread {
         }
         return completed;
     }
-    
+
     private void sendCompletedIfAny() {
         List<Future<Task>> completedFutures = getCompletedFutures();
         for (Future<Task> future : completedFutures) {
@@ -257,7 +254,7 @@ public class Checker extends Thread {
             }
         }
     }
-    
+
     private int getCoresUsed() {
         int coresUsed = 0;
         for (IProcessHolder holder : mapping.values()) {
@@ -265,7 +262,7 @@ public class Checker extends Thread {
         }
         return coresUsed;
     }
-    
+
     private File downloadProjectJar(ProjectUID uid) throws IOException {
         File tmp = Files.createTempFile(baseJarDir.toPath(), uid.getClientName(), uid.getProjectName()).toFile();
         try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(tmp));
@@ -278,9 +275,9 @@ public class Checker extends Thread {
             pipe.close();
             return tmp;
         }
-        
+
     }
-    
+
     private Task getTask() throws RemoteException {
         ProjectUID projectUID = remoteService.getProjectIdBeforeCalculation(clientParams.getClientName());
         if (projectUID != null) {
