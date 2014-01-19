@@ -27,6 +27,7 @@ public class ClientParams {
     private int serverPort;
     private String downloadDir;
     private String uploadDir;
+    private String tempDir;
     private int memory;
     private int cores;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
@@ -62,6 +63,10 @@ public class ClientParams {
 
     private void setDefaultUploadDir() {
         setUploadDir(System.getProperty("user.home") + File.separator + "DCSN_uploaded");
+    }
+
+    private void setDefaultTemporaryDir() {
+        setTemporaryDir(System.getProperty("user.home") + File.separator + "DCSN_temporary");
     }
 
     private void setDefaultCores() {
@@ -186,6 +191,41 @@ public class ClientParams {
      */
     public String getServerAddress() {
         return serverAddress;
+    }
+
+    /**
+     *
+     * @return temporary directory
+     */
+    public String getTemporaryDir() {
+        return tempDir;
+    }
+
+    /**
+     * Sets and creates temporary directory
+     *
+     * @param dir path to the temporary directory
+     * @return true if the directory has been successfully created, false
+     * otherwise
+     */
+    public boolean setTemporaryDir(String dir) {
+        File f = new File(dir);
+        if (f.exists() && f.isDirectory()) {
+            tempDir = f.getAbsolutePath();
+            LOG.log(Level.INFO, "Temporary dir is set to: {0}", tempDir);
+            propMan.setProperty("tempDir", tempDir);
+            return true;
+        } else {
+            if (f.mkdirs()) {
+                tempDir = f.getAbsolutePath();
+                LOG.log(Level.INFO, "Temporary dir is set to: {0}", tempDir);
+                propMan.setProperty("tempDir", tempDir);
+                return true;
+            } else {
+                LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
+                return false;
+            }
+        }
     }
 
     /**
@@ -327,6 +367,14 @@ public class ClientParams {
             } catch (IllegalArgumentException e) {
                 LOG.log(Level.WARNING, "INITIALIZING: Port number has to be between 1 - 65535");
                 setDefaultPort();
+            }
+        }
+
+        if (propMan.getProperty("tempDir") == null) {
+            setDefaultTemporaryDir();
+        } else {
+            if (!setTemporaryDir(propMan.getProperty("tempDir"))) {
+                setDefaultTemporaryDir();
             }
         }
 

@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  * @author Jakub Hava
  */
 public class ClientCommands {
-
+    
     private Client client;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
@@ -27,6 +27,7 @@ public class ClientCommands {
         upload(new String[]{"D:\\BC\\D.jar", "D:\\BC\\T.zip"});
     }
     //debug
+
     public void s(String[] params) {
         startCalculation(params);
     }
@@ -88,6 +89,33 @@ public class ClientCommands {
             LOG.log(Level.INFO, "1: Path to project jar file");
             LOG.log(Level.INFO, "1: Path where new project will be created");
             LOG.log(Level.INFO, "2: New project name");
+        }
+    }
+
+    /**
+     * Gets the temporary directory
+     *
+     * @param params array of parameters
+     */
+    public void getTemporaryDir(String[] params) {
+        if (checkParamNum(0, params)) {
+            LOG.log(Level.INFO, "Temporary dir is set to : {0}", client.getClientParams().getTempDir());
+        } else {
+            LOG.log(Level.INFO, "Command has no parameters");
+        }
+    }
+
+    /**
+     * Sets the temporary directory
+     *
+     * @param params array of parameters
+     */
+    public void setTemporaryDir(String[] params) {
+        if (checkParamNum(1, params)) {
+            client.getClientParams().setTempDir(params[0]);
+        } else {
+            LOG.log(Level.INFO, "Expected parameters: 1");
+            LOG.log(Level.INFO, "1: new temp dir");
         }
     }
 
@@ -318,6 +346,7 @@ public class ClientCommands {
             getName(params);
             getServerAddress(params);
             getServerPort(params);
+            getTemporaryDir(params);
             getDownloadDir(params);
             getUploadDir(params);
             getMemory(params);
@@ -440,7 +469,7 @@ public class ClientCommands {
     public void list(String[] params) {
         if (client.isConnected()) {
             if (checkParamNum(1, params)) {
-
+                
                 switch (params[0]) {
                     case "all":
                         client.getStandardRemoteProvider().printAllProjects();
