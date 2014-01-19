@@ -120,7 +120,8 @@ public class ProccessHolder implements IProcessHolder {
 
     @Override
     public Task call() throws Exception {
-       /* File tmp = Files.createTempDirectory("DCSN_tasks_" + tsk.getUnicateID().getTaskName() + "_").toFile();
+        File tmp = Files.createTempDirectory("DCSN_task_" + tsk.getUnicateID().getTaskName() + "_").toFile();
+        CustomIO.recursiveDeleteOnShutdownHook(tmp.toPath()); // if the file is not deleted immediatelly for example because of error in the task
         CompUtils.createWorkerJar(new File(tmp, "worker.jar"));
         CompUtils.serialiseToFile(tsk, tmp);
         final Process p = startJVM(
@@ -139,13 +140,8 @@ public class ProccessHolder implements IProcessHolder {
             tsk = CompUtils.deserialiseFromFile(new File(tmp, tsk.getUnicateID().getTaskName()), customCL);
             CustomIO.deleteDirectory(tmp);
             tsk.setState(TaskState.COMPLETE);
-
             LOG.log(Level.INFO, "Task : {0} >> calculation completed", tsk.getUnicateID());
+            return tsk;
         }
-        return tsk;
-         */
-        tsk.calculate();
-        LOG.log(Level.INFO, "Task : {0} >> calculation completed", tsk.getUnicateID());
-        return tsk;
     }
 }

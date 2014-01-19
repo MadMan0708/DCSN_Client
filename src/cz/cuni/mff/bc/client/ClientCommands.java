@@ -27,7 +27,7 @@ public class ClientCommands {
         upload(new String[]{"D:\\BC\\D.jar", "D:\\BC\\T.zip"});
     }
     //debug
-    public void s(String[] params){
+    public void s(String[] params) {
         startCalculation(params);
     }
 
