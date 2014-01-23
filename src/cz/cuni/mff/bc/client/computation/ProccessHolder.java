@@ -103,6 +103,7 @@ public class ProccessHolder implements IProcessHolder {
      * Reads and prints messages from input stream of task computation process
      *
      * @param process process with the task computation
+     * @param inputStrem stream from which messages will be read
      */
     public void startProccessInputReadingThread(final Process process, final InputStream inputStrem) {
         new Thread() {
@@ -145,7 +146,7 @@ public class ProccessHolder implements IProcessHolder {
                 tsk.getUnicateID().getTaskName(),
                 tsk.getUnicateID().getMemory(),
                 true);
-        
+
         if (process.waitFor() == 0) {
             tsk = CompUtils.deserialiseFromFile(new File(tmp, tsk.getUnicateID().getTaskName()), customCL);
             CustomIO.deleteDirectory(tmp.toPath());
