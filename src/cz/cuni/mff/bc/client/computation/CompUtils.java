@@ -12,7 +12,6 @@ import cz.cuni.mff.bc.api.main.Task;
 import cz.cuni.mff.bc.api.main.TaskID;
 import cz.cuni.mff.bc.misc.CustomClassLoader;
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

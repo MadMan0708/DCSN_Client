@@ -6,7 +6,6 @@ package cz.cuni.mff.bc.client;
 
 import cz.cuni.mff.bc.api.enums.ProjectState;
 import cz.cuni.mff.bc.api.main.CustomIO;
-import java.io.File;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;

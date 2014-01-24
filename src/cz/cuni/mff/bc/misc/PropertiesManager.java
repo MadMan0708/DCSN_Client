@@ -27,14 +27,6 @@ public class PropertiesManager {
     private boolean propSet = false;
     private static final Logger LOG = Logger.getLogger(PropertiesManager.class.getName());
 
-    // loads properties if they aren't loaded so far
-    private void checkPropExistance() {
-        if (!propSet) {
-            loadProperties();
-            propSet = true;
-        }
-    }
-
     /**
      * Constructor
      *
@@ -119,6 +111,14 @@ public class PropertiesManager {
             prop.store(new FileOutputStream(file), null);
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Properties file could not be stored {0}", e.getMessage());
+        }
+    }
+
+    // loads properties if they aren't loaded so far
+    private void checkPropExistance() {
+        if (!propSet) {
+            loadProperties();
+            propSet = true;
         }
     }
 }

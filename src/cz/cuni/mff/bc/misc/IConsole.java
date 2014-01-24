@@ -5,7 +5,7 @@
 package cz.cuni.mff.bc.misc;
 
 /**
- * Interface used to define custom client's
+ * Interface used to define custom node
  *
  * @author Jakub Hava
  */
