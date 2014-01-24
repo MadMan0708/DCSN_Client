@@ -6,6 +6,7 @@ package cz.cuni.mff.bc.client;
 
 import cz.cuni.mff.bc.misc.PropertiesManager;
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
@@ -136,7 +137,7 @@ public class ClientParams {
     public void setMemory(int memory) throws IllegalArgumentException {
         if (memory > 0) {
             this.memory = memory;
-            LOG.log(Level.INFO, "Amount of memory allowed is now set to: {0}", memory);
+            LOG.log(Level.INFO, "Memory limit for task computation is set to: {0}", memory);
             propMan.setProperty("memory", memory + "");
         } else {
             throw new IllegalArgumentException();
@@ -159,7 +160,7 @@ public class ClientParams {
     public void setCores(int cores) throws IllegalArgumentException {
         if (cores > 0) {
             this.cores = cores;
-            LOG.log(Level.INFO, "Number of cores allowed is now set to: {0}", cores);
+            LOG.log(Level.INFO, "Cores limit for task computation is set to: {0}", cores);
             propMan.setProperty("cores", cores + "");
         } else {
             throw new IllegalArgumentException();
@@ -182,7 +183,7 @@ public class ClientParams {
      */
     public void setServerAddress(String serverAddress) throws UnknownHostException {
         this.serverAddress = InetAddress.getByName(serverAddress).getHostAddress();
-        LOG.log(Level.INFO, "Server address is now set to: {0}", this.serverAddress);
+        LOG.log(Level.INFO, "Server address is set to: {0}", this.serverAddress);
         propMan.setProperty("address", this.serverAddress);
     }
 
@@ -211,21 +212,19 @@ public class ClientParams {
      */
     public boolean setTemporaryDir(String dir) {
         File f = new File(dir);
-        if (f.exists() && f.isDirectory()) {
-            tempDir = f.toPath().toAbsolutePath();
-            LOG.log(Level.INFO, "Temporary dir is set to: {0}", tempDir);
-            propMan.setProperty("tempDir", tempDir.toString());
-            return true;
-        } else {
-            if (f.mkdirs()) {
-                tempDir = f.toPath().toAbsolutePath();
+        if ((f.exists() && f.isDirectory()) || f.mkdirs()) {
+            try {
+                tempDir = f.getCanonicalFile().toPath().toAbsolutePath();
                 LOG.log(Level.INFO, "Temporary dir is set to: {0}", tempDir);
                 propMan.setProperty("tempDir", tempDir.toString());
                 return true;
-            } else {
+            } catch (IOException e) {
                 LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
                 return false;
             }
+        } else {
+            LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
+            return false;
         }
     }
 
@@ -246,22 +245,28 @@ public class ClientParams {
      */
     public boolean setDownloadDir(String dir) {
         File f = new File(dir);
-        if (f.exists() && f.isDirectory()) {
-            downloadDir = f.toPath().toAbsolutePath();
-            LOG.log(Level.INFO, "Download dir is set to: {0}", downloadDir);
-            propMan.setProperty("downloadDir", downloadDir.toString());
-            return true;
-        } else {
-            if (f.mkdirs()) {
-                downloadDir = f.toPath().toAbsolutePath();
+        if ((f.exists() && f.isDirectory()) || f.mkdirs()) {
+            try {
+                downloadDir = f.getCanonicalFile().toPath().toAbsolutePath();
                 LOG.log(Level.INFO, "Download dir is set to: {0}", downloadDir);
                 propMan.setProperty("downloadDir", downloadDir.toString());
                 return true;
-            } else {
+            } catch (IOException e) {
                 LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
                 return false;
             }
+        } else {
+            LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
+            return false;
         }
+    }
+
+    /**
+     *
+     * @return upload directory
+     */
+    public Path getUploadDir() {
+        return uploadDir;
     }
 
     /**
@@ -272,21 +277,19 @@ public class ClientParams {
      */
     public boolean setUploadDir(String dir) {
         File f = new File(dir);
-        if (f.exists() && f.isDirectory()) {
-            uploadDir = f.toPath().toAbsolutePath();
-            LOG.log(Level.INFO, "Upload dir is set to: {0}", uploadDir);
-            propMan.setProperty("uploadDir", uploadDir.toString());
-            return true;
-        } else {
-            if (f.mkdirs()) {
-                uploadDir = f.toPath().toAbsolutePath();
+        if ((f.exists() && f.isDirectory()) || f.mkdirs()) {
+            try {
+                uploadDir = f.getCanonicalFile().toPath().toAbsolutePath();
                 LOG.log(Level.INFO, "Upload dir is set to: {0}", uploadDir);
                 propMan.setProperty("uploadDir", uploadDir.toString());
                 return true;
-            } else {
+            } catch (IOException e) {
                 LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
                 return false;
             }
+        } else {
+            LOG.log(Level.WARNING, "Path {0} is not correct path", dir);
+            return false;
         }
     }
 
@@ -296,7 +299,7 @@ public class ClientParams {
      */
     public void setClientName(String clientName) {
         this.clientName = clientName;
-        LOG.log(Level.INFO, "Client name is now set to: {0}", this.clientName);
+        LOG.log(Level.INFO, "Client name is set to: {0}", this.clientName);
         propMan.setProperty("name", this.clientName);
     }
 
@@ -309,14 +312,6 @@ public class ClientParams {
     }
 
     /**
-     *
-     * @return upload directory
-     */
-    public Path getUploadDir() {
-        return uploadDir;
-    }
-
-    /**
      * Initialises parameters
      */
     public void initialisesParameters() {
@@ -326,7 +321,7 @@ public class ClientParams {
             try {
                 setCores(Integer.parseInt(propMan.getProperty("cores")));
             } catch (NumberFormatException e) {
-                LOG.log(Level.WARNING, "INITIALIZING: Number of cores has to be positive integer");
+                LOG.log(Level.WARNING, "INITIALIZING: Cores limit for task computation has to be positive integer");
                 setDefaultCores();
             }
         }
@@ -337,7 +332,7 @@ public class ClientParams {
             try {
                 setMemory(Integer.parseInt(propMan.getProperty("memory")));
             } catch (NumberFormatException e) {
-                LOG.log(Level.WARNING, "INITIALIZING: Amount of memory has to be positive integer");
+                LOG.log(Level.WARNING, "INITIALIZING: Memory limit for task computation has to be positive integer");
                 setDefaultMemory();
             }
         }

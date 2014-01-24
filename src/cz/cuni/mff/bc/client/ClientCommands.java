@@ -69,16 +69,16 @@ public class ClientCommands {
                 if (CustomIO.getExtension(destinationJar.toFile()).equals("jar")) {
                     client.createProjectFrom(projectJar, destinationJar, params[2]);
                 } else {
-                    LOG.log(Level.WARNING, "New project jar file has to have jar extension");
+                    LOG.log(Level.WARNING, "New project file has to have jar extension");
                 }
             } catch (IllegalArgumentException e) {
                 LOG.log(Level.WARNING, "Incorrect path");
             }
         } else {
-            LOG.log(Level.INFO, "Expected parameters: 2");
-            LOG.log(Level.INFO, "1: Path to project jar file");
-            LOG.log(Level.INFO, "1: Path where new project will be created");
-            LOG.log(Level.INFO, "2: New project name");
+            LOG.log(Level.INFO, "Expected parameters: 3");
+            LOG.log(Level.INFO, "1: Path to the existing project jar file");
+            LOG.log(Level.INFO, "2: Path where new project will be created");
+            LOG.log(Level.INFO, "3: New project name");
         }
     }
 
@@ -105,7 +105,7 @@ public class ClientCommands {
             client.getClientParams().setTemporaryDir(params[0]);
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
-            LOG.log(Level.INFO, "1: new temp dir");
+            LOG.log(Level.INFO, "1: Path to the temporary directory");
         }
     }
 
@@ -132,21 +132,7 @@ public class ClientCommands {
             client.getClientParams().setDownloadDir(params[0]);
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
-            LOG.log(Level.INFO, "1: new download dir");
-        }
-    }
-
-    /**
-     * Sets the upload directory
-     *
-     * @param params array of parameters
-     */
-    public void setUploadDir(String[] params) {
-        if (checkParamNum(1, params)) {
-            client.getClientParams().setUploadDir(params[0]);
-        } else {
-            LOG.log(Level.INFO, "Expected parameters: 1");
-            LOG.log(Level.INFO, "1: new upload dir");
+            LOG.log(Level.INFO, "1: Path to the download directory");
         }
     }
 
@@ -160,6 +146,20 @@ public class ClientCommands {
             LOG.log(Level.INFO, "Upload dir is set to : {0}", client.getClientParams().getUploadDir());
         } else {
             LOG.log(Level.INFO, "Command has no parameters");
+        }
+    }
+
+    /**
+     * Sets the upload directory
+     *
+     * @param params array of parameters
+     */
+    public void setUploadDir(String[] params) {
+        if (checkParamNum(1, params)) {
+            client.getClientParams().setUploadDir(params[0]);
+        } else {
+            LOG.log(Level.INFO, "Expected parameters: 1");
+            LOG.log(Level.INFO, "1: Path to the upload directory");
         }
     }
 
@@ -179,7 +179,7 @@ public class ClientCommands {
             }
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
-            LOG.log(Level.INFO, "1: Server new IP address[:port]");
+            LOG.log(Level.INFO, "1: Server IP address[:port]");
         }
     }
 
@@ -210,7 +210,7 @@ public class ClientCommands {
             }
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
-            LOG.log(Level.INFO, "1: Server new port");
+            LOG.log(Level.INFO, "1: Server port");
         }
     }
 
@@ -237,7 +237,7 @@ public class ClientCommands {
             client.getClientParams().setClientName(params[0]);
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
-            LOG.log(Level.INFO, "1: Client new id");
+            LOG.log(Level.INFO, "1: Client name");
         }
     }
 
@@ -267,13 +267,13 @@ public class ClientCommands {
                     client.getStandardRemoteProvider().setMemoryLimit(Integer.parseInt(params[0]));
                 }
             } catch (NumberFormatException e) {
-                LOG.log(Level.WARNING, "Amount of memory allowed to use by tasks has to be positive integer");
+                LOG.log(Level.WARNING, "Memory limit for task computation has to be positive integer");
             } catch (IllegalArgumentException e) {
-                LOG.log(Level.WARNING, "Amount of memory allowed to use by tasks has to be positive integer");
+                LOG.log(Level.WARNING, "Memory limit for task computation has to be positive integer");
             }
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
-            LOG.log(Level.INFO, "1: new memory limit for task computation");
+            LOG.log(Level.INFO, "1: Memory limit for task computation");
         }
     }
 
@@ -284,7 +284,7 @@ public class ClientCommands {
      */
     public void getMemory(String[] params) {
         if (checkParamNum(0, params)) {
-            LOG.log(Level.INFO, "Amount of memory allowed to use by tasks is set to: {0}", client.getClientParams().getMemory());
+            LOG.log(Level.INFO, "Memory limit for task computation is set to: {0}mb", client.getClientParams().getMemory());
         } else {
             LOG.log(Level.INFO, "Command has no parameters");
         }
@@ -303,13 +303,13 @@ public class ClientCommands {
                     client.getStandardRemoteProvider().setCoresLimit(Integer.parseInt(params[0]));
                 }
             } catch (NumberFormatException e) {
-                LOG.log(Level.WARNING, "Number of cores allowed to use by tasks has to be positive integer");
+                LOG.log(Level.WARNING, "Cores limit for task computation has to be positive integer");
             } catch (IllegalArgumentException e) {
-                LOG.log(Level.WARNING, "Number of cores allowed to use by tasks has to be positive integer");
+                LOG.log(Level.WARNING, "Cores limit for task computation has to be positive integer");
             }
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
-            LOG.log(Level.INFO, "1: new limit for cores allowed to use by task computation");
+            LOG.log(Level.INFO, "1: Cores limit for task computation");
         }
     }
 
@@ -353,7 +353,11 @@ public class ClientCommands {
      */
     public void printProjectInfo(String[] params) {
         if (checkParamNum(1, params)) {
-            client.getStandardRemoteProvider().printProjectInfo(params[0]);
+            if (client.isConnected()) {
+                client.getStandardRemoteProvider().printProjectInfo(params[0]);
+            } else {
+                LOG.log(Level.WARNING, "Not connected");
+            }
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
             LOG.log(Level.INFO, "1: Project name");
@@ -424,7 +428,11 @@ public class ClientCommands {
      */
     public void disconnect(String[] params) {
         if (checkParamNum(0, params)) {
-            client.disconnect();
+            if (client.isConnected()) {
+                client.disconnect();
+            } else {
+                LOG.log(Level.WARNING, "Not connected");
+            }
         } else {
             LOG.log(Level.INFO, "Command has no parameters");
         }
@@ -438,12 +446,16 @@ public class ClientCommands {
      */
     public void manual(String[] params) {
         if (checkParamNum(1, params)) {
-            LOG.log(Level.INFO, "Starting manual proccessing");
-            try {
-                Path projectJar = client.getUploadFileLocation(params[0]);
-                client.startManual(projectJar);
-            } catch (IllegalArgumentException e) {
-                LOG.log(Level.WARNING, "Incorrect path");
+            if (client.isConnected()) {
+                LOG.log(Level.INFO, "Starting manual proccessing");
+                try {
+                    Path projectJar = client.getUploadFileLocation(params[0]);
+                    client.startManual(projectJar);
+                } catch (IllegalArgumentException e) {
+                    LOG.log(Level.WARNING, "Incorrect path");
+                }
+            } else {
+                LOG.log(Level.WARNING, "Not connected");
             }
         } else {
             LOG.log(Level.INFO, "Expected parameters: 1");
@@ -457,9 +469,8 @@ public class ClientCommands {
      * @param params array of parameters
      */
     public void list(String[] params) {
-        if (client.isConnected()) {
-            if (checkParamNum(1, params)) {
-
+        if (checkParamNum(1, params)) {
+            if (client.isConnected()) {
                 switch (params[0]) {
                     case "all":
                         client.getStandardRemoteProvider().printAllProjects();
@@ -480,11 +491,11 @@ public class ClientCommands {
                         LOG.log(Level.INFO, "states which can listed are: all, completed, paused, active, corrupted");
                 }
             } else {
-                LOG.log(Level.INFO, "Expected parameters: 1");
-                LOG.log(Level.INFO, "1: Type of projects - all, completed, paused, active, corrupted");
+                LOG.log(Level.WARNING, "Not connected");
             }
         } else {
-            LOG.log(Level.WARNING, "Not connected");
+            LOG.log(Level.INFO, "Expected parameters: 1");
+            LOG.log(Level.INFO, "1: Type of projects - all, completed, paused, active, corrupted");
         }
     }
 
@@ -494,15 +505,15 @@ public class ClientCommands {
      * @param params array of parameters
      */
     public void pause(String[] params) {
-        if (client.isConnected()) {
-            if (checkParamNum(1, params)) {
+        if (checkParamNum(1, params)) {
+            if (client.isConnected()) {
                 client.getStandardRemoteProvider().pauseProject(params[0]);
             } else {
-                LOG.log(Level.INFO, "Expected parameters: 1");
-                LOG.log(Level.INFO, "1: Name of project which should be paused");
+                LOG.log(Level.WARNING, "Not connected");
             }
         } else {
-            LOG.log(Level.WARNING, "Not connected");
+            LOG.log(Level.INFO, "Expected parameters: 1");
+            LOG.log(Level.INFO, "1: Name of project which should be paused");
         }
     }
 
@@ -512,15 +523,15 @@ public class ClientCommands {
      * @param params array of parameters
      */
     public void cancel(String[] params) {
-        if (client.isConnected()) {
-            if (checkParamNum(1, params)) {
+        if (checkParamNum(1, params)) {
+            if (client.isConnected()) {
                 client.getStandardRemoteProvider().cancelProject(params[0]);
             } else {
-                LOG.log(Level.INFO, "Expected parameters: 1");
-                LOG.log(Level.INFO, "1: Name of project which should be canceled");
+                LOG.log(Level.WARNING, "Not connected");
             }
         } else {
-            LOG.log(Level.WARNING, "Not connected");
+            LOG.log(Level.INFO, "Expected parameters: 1");
+            LOG.log(Level.INFO, "1: Name of project which should be canceled");
         }
     }
 
@@ -530,15 +541,15 @@ public class ClientCommands {
      * @param params array of parameters
      */
     public void resume(String[] params) {
-        if (client.isConnected()) {
-            if (checkParamNum(1, params)) {
+        if (checkParamNum(1, params)) {
+            if (client.isConnected()) {
                 client.getStandardRemoteProvider().resumeProject(params[0]);
             } else {
-                LOG.log(Level.INFO, "Expected parameters: 1");
-                LOG.log(Level.INFO, "1: Name of project which should be unpaused");
+                LOG.log(Level.WARNING, "Not connected");
             }
         } else {
-            LOG.log(Level.WARNING, "Not connected");
+            LOG.log(Level.INFO, "Expected parameters: 1");
+            LOG.log(Level.INFO, "1: Name of project which should be unpaused");
         }
     }
 
@@ -548,15 +559,15 @@ public class ClientCommands {
      * @param params array of parameters
      */
     public void downloadReady(String[] params) {
-        if (client.isConnected()) {
-            if (checkParamNum(1, params)) {
+        if (checkParamNum(1, params)) {
+            if (client.isConnected()) {
                 client.getStandardRemoteProvider().isProjectReadyForDownload(params[0]);
             } else {
-                LOG.log(Level.INFO, "Expected parameters: 1");
-                LOG.log(Level.INFO, "1: Name of project which should be checked if is ready for download");
+                LOG.log(Level.WARNING, "Not connected");
             }
         } else {
-            LOG.log(Level.WARNING, "Not connected");
+            LOG.log(Level.INFO, "Expected parameters: 1");
+            LOG.log(Level.INFO, "1: Name of project which should be checked if is ready for download");
         }
     }
 
@@ -566,8 +577,8 @@ public class ClientCommands {
      * @param params array of parameters
      */
     public void upload(String[] params) {
-        if (client.isConnected()) {
-            if (checkParamNum(2, params)) {
+        if (checkParamNum(2, params)) {
+            if (client.isConnected()) {
                 try {
                     Path projectJar = client.getUploadFileLocation(params[0]);
                     Path projectData = client.getUploadFileLocation(params[1]);
@@ -576,12 +587,12 @@ public class ClientCommands {
                     LOG.log(Level.WARNING, "Incorrect path: {0}", e.getMessage());
                 }
             } else {
-                LOG.log(Level.INFO, "Expected parameters: 2");
-                LOG.log(Level.INFO, "1: Path to project jar");
-                LOG.log(Level.INFO, "2: Path to project data");
+                LOG.log(Level.WARNING, "Not connected");
             }
         } else {
-            LOG.log(Level.WARNING, "Not connected");
+            LOG.log(Level.INFO, "Expected parameters: 2");
+            LOG.log(Level.INFO, "1: Path to project jar");
+            LOG.log(Level.INFO, "2: Path to project data");
         }
     }
 
@@ -591,15 +602,15 @@ public class ClientCommands {
      * @param params array of parameters
      */
     public void download(String[] params) {
-        if (client.isConnected()) {
-            if (checkParamNum(1, params)) {
+        if (checkParamNum(1, params)) {
+            if (client.isConnected()) {
                 client.getStandardRemoteProvider().download(params[0], Paths.get(client.getClientParams().getDownloadDir().toString(), params[0] + ".zip"));
             } else {
-                LOG.log(Level.INFO, "Expected parameters: 1");
-                LOG.log(Level.INFO, "1: Project name");
+                LOG.log(Level.WARNING, "Not connected");
             }
         } else {
-            LOG.log(Level.WARNING, "Not connected");
+            LOG.log(Level.INFO, "Expected parameters: 1");
+            LOG.log(Level.INFO, "1: Project name");
         }
     }
 

@@ -251,7 +251,7 @@ public class Client implements IConsole {
             standartRemoteProvider = null;
             LOG.log(Level.INFO, "Client {0} was successfully disconnected", clientParams.getClientName());
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Disconnecting unsuccessful due to network erro:{0}", e.getMessage());
+            LOG.log(Level.WARNING, "Disconnecting unsuccessful due to network error: {0}", e.getMessage());
         }
     }
 
