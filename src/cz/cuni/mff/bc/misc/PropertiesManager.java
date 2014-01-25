@@ -92,13 +92,13 @@ public class PropertiesManager {
             File p = new File(file);
             if (p.exists()) {
                 prop.load(new FileInputStream(file));
-                LOG.log(Level.INFO, "Loading properties file");
+                LOG.log(Level.FINE, "Loading properties file");
             } else {
-                LOG.log(Level.INFO, "Creating new properties file");
+                LOG.log(Level.FINE, "Creating new properties file");
             }
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Properties file couldn''t be loaded: {0}", e.getMessage());
-            LOG.log(Level.INFO, "Creating new properties file: {0}", e.getMessage());
+            LOG.log(Level.FINE, "Properties file couldn''t be loaded: {0}", e.getMessage());
+            LOG.log(Level.FINE, "Creating new properties file: {0}", e.getMessage());
             prop = new Properties();
         }
     }
@@ -110,7 +110,7 @@ public class PropertiesManager {
         try {
             prop.store(new FileOutputStream(file), null);
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Properties file could not be stored {0}", e.getMessage());
+            LOG.log(Level.FINE, "Properties file could not be stored {0}", e.getMessage());
         }
     }
 

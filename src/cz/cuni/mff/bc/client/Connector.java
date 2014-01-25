@@ -4,7 +4,6 @@
  */
 package cz.cuni.mff.bc.client;
 
-import cz.cuni.mff.bc.misc.IClient;
 import cz.cuni.mff.bc.misc.CustomClassLoader;
 import cz.cuni.mff.bc.api.enums.InformMessage;
 import cz.cuni.mff.bc.api.main.IServer;
@@ -91,9 +90,6 @@ public class Connector {
         remoteSession.send(clientName);
         if (((Boolean) remoteSession.receive()).equals(Boolean.TRUE)) {
             remoteService = (IServer) remoteSession.receive();
-            remoteSession.send(new IClient() {
-                // prepared for future development in case server needs to manipulate with client
-            });
             return true;
         } else {
             return false;
@@ -151,11 +147,11 @@ public class Connector {
             ArrayList<TaskID> taskToCancel = remoteService.sendTasksInCalculation(clientParams.getClientName(), checker.getTasksInCalculation());
             for (TaskID tsk : taskToCancel) {
                 checker.cancelTaskCalculation(tsk);
-                LOG.log(Level.INFO, "Task {0} is canceled by server purposes", tsk);
+                LOG.log(Level.FINE, "Task {0} is canceled by server purposes", tsk);
             }
         } catch (RemoteException e) {
-            LOG.log(Level.WARNING, "Server couldn't be informed due to network error");
-            LOG.log(Level.INFO, "Stopping the calculation");
+            LOG.log(Level.FINE, "Server couldn't be informed due to network error");
+            LOG.log(Level.FINE, "Stopping the calculation");
             checker.stopCalculation();
         }
     }

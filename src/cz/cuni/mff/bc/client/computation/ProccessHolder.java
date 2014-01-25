@@ -50,7 +50,7 @@ public class ProccessHolder implements IProcessHolder {
         try {
             customCL.addNewUrl(classPath.toURI().toURL());
         } catch (MalformedURLException e) {
-            LOG.log(Level.WARNING, "Incorrect classpath for deserialising task after computation for task {0}", tsk.getUnicateID().getTaskName());
+            LOG.log(Level.FINE, "Incorrect classpath for deserialising task after computation for task {0}", tsk.getUnicateID().getTaskName());
         }
     }
 
@@ -91,10 +91,10 @@ public class ProccessHolder implements IProcessHolder {
                 taskName);
         processBuilder.redirectErrorStream(redirectStream);
         Process p = processBuilder.start();
-        LOG.log(Level.INFO, "Virtual machine for task {0} launched", tsk.getUnicateID());
+        LOG.log(Level.FINE, "Virtual machine for task {0} launched", tsk.getUnicateID());
         startProccessInputReadingThread(p, p.getErrorStream());
         processBuilder.start();
-        LOG.log(Level.INFO, "Task : {0} >> calculation started", tsk.getUnicateID());
+        LOG.log(Level.FINE, "Task : {0} >> calculation started", tsk.getUnicateID());
         return p;
     }
 
@@ -121,12 +121,12 @@ public class ProccessHolder implements IProcessHolder {
                                 new InputStreamReader(inputStrem))) {
                             String line = null;
                             while ((line = reader.readLine()) != null) {
-                                LOG.log(Level.INFO, "Process: {0} >> {1}", new Object[]{process.toString(), line});
+                                LOG.log(Level.FINE, "Process: {0} >> {1}", new Object[]{process.toString(), line});
                             }
                         }
                     }
                 } catch (final Exception e) {
-                    LOG.log(Level.WARNING, "Coudln't read from process {0} input stream.", process.toString());
+                    LOG.log(Level.FINE, "Coudln't read from process {0} input stream.", process.toString());
                 }
             }
         }.start();
@@ -150,7 +150,7 @@ public class ProccessHolder implements IProcessHolder {
             tsk = CompUtils.deserialiseFromFile(new File(tmp, tsk.getUnicateID().getTaskName()), customCL);
             CustomIO.deleteDirectory(tmp.toPath());
             tsk.setState(TaskState.COMPLETE);
-            LOG.log(Level.INFO, "Task : {0} >> calculation completed", tsk.getUnicateID());
+            LOG.log(Level.FINE, "Task : {0} >> calculation completed", tsk.getUnicateID());
             return tsk;
         } else if (process.waitFor() == 1) {
             throw new ExecutionException("Task : " + tsk.getUnicateID() + " >> Project of this task is corrupted: ", null);

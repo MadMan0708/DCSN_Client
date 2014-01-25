@@ -15,7 +15,6 @@ import cz.cuni.mff.bc.client.logging.CustomHandler;
 import cz.cuni.mff.bc.client.logging.FileLogger;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -37,9 +36,6 @@ import java.util.Enumeration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.jar.Attributes;
-import java.util.jar.JarInputStream;
-import java.util.jar.Manifest;
 import java.util.logging.Level;
 
 /**
@@ -67,6 +63,7 @@ public class Client implements IConsole {
         logHandler.setLevel(Level.ALL);
         logHandler.addLogTarget(new FileLogger(new File("client.log")));
         LOG.addHandler(logHandler);
+        LOG.setLevel(Level.ALL);
         clientParams = new ClientParams(logHandler);
         connector = new Connector(clientParams);
         commands = new ClientCommands(this);
@@ -139,7 +136,7 @@ public class Client implements IConsole {
     public void createProjectFrom(Path source, Path destination, String projectName) {
         try {
             JarTools.createJarWithChangedAttributeValue(source, destination, "Project-Name", projectName);
-            LOG.log(Level.INFO, "New project from file \"{0}\" has been created, with projec name: {1}", new Object[]{source.toString(), projectName});
+            LOG.log(Level.INFO, "New project from file \"{0}\" has been created, with project name: {1}", new Object[]{source.toString(), projectName});
         } catch (FileNotFoundException e) {
             LOG.log(Level.WARNING, "Project file not exists on written path: {0}", e.toString());
         } catch (IOException e) {
@@ -171,7 +168,7 @@ public class Client implements IConsole {
                     @Override
                     public void run() {
                         commander.start(new StandardRemoteProvider(connector.getRemoteService(), clientParams.getClientName(),
-                                clientParams.getDownloadDir(), clientParams.getUploadDir(), currentJar, LOG));
+                                clientParams.getDownloadDir(), clientParams.getUploadDir(), clientParams.getTemporaryDir(), currentJar, LOG));
                     }
                 });
             } catch (InstantiationException | MalformedURLException | ClassNotFoundException | IllegalAccessException | SecurityException e) {
@@ -212,16 +209,23 @@ public class Client implements IConsole {
             if (!isConnected()) {
                 connect();
             }
-            Future<?> f = startManual(projectJar);
-            while (!f.isDone()) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException ex) {
-                    LOG.log(Level.SEVERE, null, ex);
+            if (isConnected()) {
+                Future<?> f = startManual(projectJar);
+                if (f != null) {
+                    while (!f.isDone()) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException ex) {
+                            LOG.log(Level.SEVERE, null, ex);
+                        }
+                    }
                 }
+                disconnect();
+                exitClient();
+            } else {
+                LOG.log(Level.WARNING, "Client couldn't be connected");
+                exitClient();
             }
-            disconnect();
-            exitClient();
         } catch (IllegalArgumentException e) {
             LOG.log(Level.WARNING, "Incorrect path: {0}", e.getMessage());
         }
@@ -319,7 +323,7 @@ public class Client implements IConsole {
                     DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length,
                             InetAddress.getByName("255.255.255.255"), clientParams.getServerPort());
                     socket.send(sendPacket);
-                    LOG.log(Level.INFO, "Request packet sent to: 255.255.255.255 (DEFAULT)");
+                    LOG.log(Level.FINE, "Request packet sent to: 255.255.255.255 (DEFAULT)");
                 } catch (IOException e) {
                 }
 
@@ -340,19 +344,19 @@ public class Client implements IConsole {
                         try {
                             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, broadcast, clientParams.getServerPort());
                             socket.send(sendPacket);
-                            LOG.log(Level.INFO, "Request packet sent to: {0}; Interface: {1}", new Object[]{broadcast.getHostAddress(), networkInterface.getDisplayName()});
+                            LOG.log(Level.FINE, "Request packet sent to: {0}; Interface: {1}", new Object[]{broadcast.getHostAddress(), networkInterface.getDisplayName()});
                         } catch (IOException e) {
                         }
                     }
                 }
-                LOG.log(Level.INFO, "Looping over all network interfaces done. Now waiting for a reply!");
+                LOG.log(Level.FINE, "Looping over all network interfaces done. Now waiting for a reply!");
 
                 //Wait for a response
                 byte[] recvBuf = new byte[15000];
                 DatagramPacket receivePacket = new DatagramPacket(recvBuf, recvBuf.length);
                 socket.receive(receivePacket);
                 //We have a response
-                LOG.log(Level.INFO, "Broadcast response from server: {0}", receivePacket.getAddress().getHostAddress());
+                LOG.log(Level.FINE, "Broadcast response from server: {0}", receivePacket.getAddress().getHostAddress());
                 //Check if the message is correct
                 String message = new String(receivePacket.getData()).trim();
                 if (message.equals("DISCOVER_SERVER_RESPONSE")) {
@@ -366,7 +370,7 @@ public class Client implements IConsole {
                 }
             }
         } catch (IOException ex) {
-            LOG.log(Level.WARNING, "Problem during sending broadcast packet: {0}", ex);
+            LOG.log(Level.FINE, "Problem during sending broadcast packet: {0}", ex);
         }
     }
 

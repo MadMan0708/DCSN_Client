@@ -18,7 +18,8 @@ public class CustomHandler extends Handler {
     private ArrayList<ILogTarget> targets = new ArrayList<>();
 
     /**
-     *Adds new logging target to the log handler
+     * Adds new logging target to the log handler
+     *
      * @param target log target
      */
     public void addLogTarget(ILogTarget target) {
@@ -26,7 +27,8 @@ public class CustomHandler extends Handler {
     }
 
     /**
-     *Deletes the logging target from the log handler
+     * Deletes the logging target from the log handler
+     *
      * @param target
      */
     public void deleteLogTarger(ILogTarget target) {

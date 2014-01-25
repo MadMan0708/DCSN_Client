@@ -18,7 +18,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -142,11 +141,11 @@ public class Checker extends Thread {
         Set<Future<Task>> futures = new LinkedHashSet<>(mapping.keySet());
         for (Future<Task> future : futures) {
             mapping.get(future).killProcess();
-            LOG.log(Level.INFO, "Calculation of {0} has been canceled", mapping.get(future).getCurrentTaskID().toString());
+            LOG.log(Level.FINE, "Calculation of {0} has been canceled", mapping.get(future).getCurrentTaskID().toString());
             try {
                 remoteService.cancelTaskOnClient(clientParams.getClientName(), mapping.get(future).getCurrentTaskID());
             } catch (RemoteException e) {
-                LOG.log(Level.INFO, "Canceling taks from client problem: {0}", e.getMessage());
+                LOG.log(Level.FINE, "Canceling taks from client problem: {0}", e.getMessage());
             }
         }
         executor.shutdownNow();
@@ -168,10 +167,10 @@ public class Checker extends Thread {
         try {
             getAndCalculateTasks();
         } catch (RemoteException e) {
-            LOG.log(Level.WARNING, "Stopping the calculation because of the connection problem: {0}", e.getMessage());
+            LOG.log(Level.FINE, "Stopping the calculation because of the connection problem: {0}", e.getMessage());
             stopCalculation();
         } catch (InterruptedException e) {
-            LOG.log(Level.CONFIG, "Checker thread has been interrupted");
+            LOG.log(Level.FINE, "Checker thread has been interrupted");
         }
     }
 
@@ -186,19 +185,19 @@ public class Checker extends Thread {
                         mapping.put(submit, holder);
                     } else { // no more tasks, sleep
                         if (getCoresUsed() == 0) { // check if all tasks has been sent to the server
-                            LOG.log(Level.INFO, "No tasks to calculate, waiting...");
+                            LOG.log(Level.FINE, "No tasks to calculate, waiting...");
                             Checker.sleep(sleepThreadTime);
                         }
                     }
                 } else {
-                    LOG.log(Level.INFO, "Waiting for computation capacity for next tasks.");
+                    LOG.log(Level.FINE, "Waiting for computation capacity for next tasks.");
                     Checker.sleep(sleepThreadTime);
                 }
             } else {
                 if (getCoresUsed() == 0) {
                     calculationInProgress = false;
                 } else {
-                    LOG.log(Level.INFO, "Waiting for the rest of tasks to be finished");
+                    LOG.log(Level.FINE, "Waiting for the rest of tasks to be finished");
                     Checker.sleep(sleepThreadTime);
                 }
             }
@@ -225,24 +224,24 @@ public class Checker extends Thread {
             try {
                 Task tsk = (Task) future.get();
                 remoteService.saveCompletedTask(clientParams.getClientName(), tsk);
-                LOG.log(Level.INFO, "Task : {0} >> sent to the server", tsk.getUnicateID());
+                LOG.log(Level.FINE, "Task : {0} >> sent to the server", tsk.getUnicateID());
             } catch (ExecutionException e) {
                 Throwable ee = e.getCause();
                 if (ee instanceof ExecutionException) {
-                    LOG.log(Level.WARNING, "Problem during task execution: {0}", ee.getMessage());
+                    LOG.log(Level.FINE, "Problem during task execution: {0}", ee.getMessage());
                     // unassociate the task
                     remoteService.cancelTaskOnClient(clientParams.getClientName(), inTheHolder);
                     // marks project as corrupted
                     remoteService.markProjectAsCorrupted(inTheHolder.getClientName(), inTheHolder.getProjectName());
                 }
                 if (ee instanceof IOException) {
-                    LOG.log(Level.WARNING, "{0}", ee.getMessage());
+                    LOG.log(Level.FINE, "{0}", ee.getMessage());
                     remoteService.cancelTaskOnClient(clientParams.getClientName(), inTheHolder);
                 }
             } catch (InterruptedException e) {
-                LOG.log(Level.INFO, "Checker has been interupted");
+                LOG.log(Level.FINE, "Checker has been interupted");
             } catch (CancellationException e) {
-                LOG.log(Level.INFO, "Problem with the task cancelation: {0}", e.getMessage());
+                LOG.log(Level.FINE, "Problem with the task cancelation: {0}", e.getMessage());
             }
         }
     }
@@ -278,12 +277,12 @@ public class Checker extends Thread {
                     projectJars.put(projectUID, tmp);
                 }
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Temp file couldn't be created: {0}", e.getMessage());
+                LOG.log(Level.FINE, "Temp file couldn't be created: {0}", e.getMessage());
             }
             try {
                 clientCustClassLoader.addNewUrl(projectJars.get(projectUID).toURI().toURL());
             } catch (MalformedURLException e) {
-                LOG.log(Level.WARNING, "Path to temp file is incorrect: {0}", e.getMessage());
+                LOG.log(Level.FINE, "Path to temp file is incorrect: {0}", e.getMessage());
             }
             return remoteService.getTask(clientParams.getClientName(), projectUID);
         } else {

@@ -210,6 +210,7 @@ public class GConsole extends Thread implements ILogTarget {
         terminal.getJFrame().setMinimumSize((new Dimension(600, 400)));
 
         new Thread() {
+            @Override
             public void run() {
                 GUI.showWindow(mainWindow, GUIScreen.Position.FULL_SCREEN);
             }
