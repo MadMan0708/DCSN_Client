@@ -8,7 +8,7 @@ import cz.cuni.mff.bc.misc.IConsole;
 import cz.cuni.mff.bc.misc.GConsole;
 import cz.cuni.mff.bc.api.main.Commander;
 import cz.cuni.mff.bc.api.main.CustomIO;
-import cz.cuni.mff.bc.api.main.JarAPI;
+import cz.cuni.mff.bc.api.main.JarTools;
 import cz.cuni.mff.bc.api.main.StandardRemoteProvider;
 import cz.cuni.mff.bc.client.logging.CustomFormater;
 import cz.cuni.mff.bc.client.logging.CustomHandler;
@@ -138,7 +138,7 @@ public class Client implements IConsole {
      */
     public void createProjectFrom(Path source, Path destination, String projectName) {
         try {
-            JarAPI.createJarWithChangedAttributeValue(source, destination, "Project-Name", projectName);
+            JarTools.createJarWithChangedAttributeValue(source, destination, "Project-Name", projectName);
             LOG.log(Level.INFO, "New project from file \"{0}\" has been created, with projec name: {1}", new Object[]{source.toString(), projectName});
         } catch (FileNotFoundException e) {
             LOG.log(Level.WARNING, "Project file not exists on written path: {0}", e.toString());
@@ -152,20 +152,20 @@ public class Client implements IConsole {
      * Starts manual processing. Executes start method in client's
      * implementation of Commander class
      *
-     * @param jar destination to the project jar
+     * @param projectJar destination to the project jar
      * @return future representing processing
      */
-    public Future<?> startManual(Path jar) {
+    public Future<?> startManual(Path projectJar) {
         Future<?> f = null;
-        final Path currentJar = jar;
-        try (JarInputStream jarStream = new JarInputStream(new FileInputStream(jar.toFile()))) {
-            Manifest mf = jarStream.getManifest();
-            Attributes attr = mf.getMainAttributes();
-            String commanderName = attr.getValue("Main-Commander-Class");
+        final Path currentJar = projectJar;
+        try {
+            CustomIO.projectJarExistsAndValid(projectJar);
+            JarTools.checkProjectParams(projectJar);
+            JarTools.isProjectCommanderClassValid(projectJar);
+            String commanderClazzName = JarTools.getAttributeFromManifest(currentJar, "Main-Commander-Class");
             try {
-                ClassLoader cl = new URLClassLoader(new URL[]{jar.toUri().toURL()});
-
-                final Class<?> clazz = cl.loadClass(commanderName);
+                ClassLoader cl = new URLClassLoader(new URL[]{projectJar.toUri().toURL()});
+                final Class<?> clazz = cl.loadClass(commanderClazzName);
                 final Commander commander = (Commander) clazz.newInstance();
                 f = executor.submit(new Runnable() {
                     @Override
@@ -177,10 +177,8 @@ public class Client implements IConsole {
             } catch (InstantiationException | MalformedURLException | ClassNotFoundException | IllegalAccessException | SecurityException e) {
                 LOG.log(Level.WARNING, e.toString());
             }
-        } catch (FileNotFoundException e) {
-            LOG.log(Level.WARNING, "Project file doesn't exist on written path: {0}", e.toString());
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Project file couldn't be load: {0}", e.toString());
+        } catch (IllegalArgumentException | IOException e) {
+            LOG.log(Level.WARNING, "{0}", e.getMessage());
         }
         return f;
     }
@@ -197,7 +195,6 @@ public class Client implements IConsole {
         Path path = Paths.get(pathToFile);
         if (!pathToFile.contains(File.separator)) {
             return Paths.get(clientParams.getUploadDir().toString(), path.toFile().getName());
-
         } else {
             return path;
         }
@@ -226,7 +223,7 @@ public class Client implements IConsole {
             disconnect();
             exitClient();
         } catch (IllegalArgumentException e) {
-            LOG.log(Level.WARNING, "Incorrect path");
+            LOG.log(Level.WARNING, "Incorrect path: {0}", e.getMessage());
         }
     }
 

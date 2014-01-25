@@ -6,9 +6,12 @@ package cz.cuni.mff.bc.client;
 
 import cz.cuni.mff.bc.api.enums.ProjectState;
 import cz.cuni.mff.bc.api.main.CustomIO;
+import java.io.File;
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -69,7 +72,7 @@ public class ClientCommands {
                 if (CustomIO.getExtension(destinationJar.toFile()).equals("jar")) {
                     client.createProjectFrom(projectJar, destinationJar, params[2]);
                 } else {
-                    LOG.log(Level.WARNING, "New project file has to have jar extension");
+                    LOG.log(Level.WARNING, "Created project file has to have jar extension");
                 }
             } catch (IllegalArgumentException e) {
                 LOG.log(Level.WARNING, "Incorrect path");
