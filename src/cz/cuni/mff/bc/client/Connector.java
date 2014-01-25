@@ -52,6 +52,8 @@ public class Connector {
      */
     public void startCalculation() throws RemoteException {
         if (remoteSession != null) {
+            // set the checker
+            checker = new Checker(remoteService, clientParams, cl);
             checker.startCalculation();
             sendInformMessage(InformMessage.CALCULATION_STARTED);
             timer = new Timer();
@@ -90,10 +92,8 @@ public class Connector {
         if (((Boolean) remoteSession.receive()).equals(Boolean.TRUE)) {
             remoteService = (IServer) remoteSession.receive();
             remoteSession.send(new IClient() {
-                // prepared for future, if server needs to manipulate with client
+                // prepared for future development in case server needs to manipulate with client
             });
-            // set checker if the connection was successfull
-            this.checker = new Checker(remoteService, clientParams, cl);
             return true;
         } else {
             return false;

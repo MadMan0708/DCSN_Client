@@ -302,7 +302,7 @@ public class Client implements IConsole {
                 if (force) {
                     LOG.log(Level.INFO, "Client has stopped computation of tasks");
                 } else {
-                    LOG.log(Level.INFO, "Client is finishing currently calculated tasks");
+                    LOG.log(Level.INFO, "Client is not recieving new tasks");
                 }
             } else {
                 LOG.log(Level.INFO, "Client is not participating in task computation");

@@ -69,13 +69,9 @@ public class Checker extends Thread {
         this.mapping = new ConcurrentHashMap<>();
         this.clientParams = clientParams;
         this.clientCustClassLoader = clientCustClassLoader;
-        try {
-
-            baseJarDir = Files.createDirectory(Paths.get(clientParams.getTemporaryDir().toString(), "project_jars")).toFile();
-            CustomIO.recursiveDeleteOnShutdownHook(baseJarDir.toPath());
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Can't create temp directory: {0}", e.getMessage());
-        }
+        baseJarDir = new File(clientParams.getTemporaryDir().toFile(), "project_jars");
+        baseJarDir.mkdirs();
+        CustomIO.recursiveDeleteOnShutdownHook(baseJarDir.toPath());
     }
 
     /**
@@ -199,10 +195,10 @@ public class Checker extends Thread {
                     Checker.sleep(sleepThreadTime);
                 }
             } else {
-                LOG.log(Level.INFO, "Waiting for the rest of tasks to be finished");
                 if (getCoresUsed() == 0) {
                     calculationInProgress = false;
                 } else {
+                    LOG.log(Level.INFO, "Waiting for the rest of tasks to be finished");
                     Checker.sleep(sleepThreadTime);
                 }
             }
@@ -260,7 +256,7 @@ public class Checker extends Thread {
     }
 
     private File downloadProjectJar(ProjectUID uid) throws IOException {
-        File tmp = Files.createTempFile(baseJarDir.toPath(), uid.getClientName(), uid.getProjectName()).toFile();
+        File tmp = Files.createTempFile(clientParams.getTemporaryDir(), uid.getClientName(), uid.getProjectName()).toFile();
         try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(tmp));
                 Pipe pipe = remoteService.downloadProjectJar(uid, null)) {
             int n;
@@ -271,7 +267,6 @@ public class Checker extends Thread {
             pipe.close();
             return tmp;
         }
-
     }
 
     private Task getTaskToCalculate() throws RemoteException {
