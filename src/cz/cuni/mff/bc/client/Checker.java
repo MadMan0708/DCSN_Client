@@ -43,7 +43,7 @@ import org.cojen.dirmi.Pipe;
 public class Checker extends Thread {
 
     private HashMap<ProjectUID, File> projectJars;
-    private final long sleepThreadTime = 10000;
+    private final long sleepThreadTime = 60000;
     private IServer remoteService;
     private ExecutorService executor;
     private ConcurrentHashMap<Future<Task>, IProcessHolder> mapping;
