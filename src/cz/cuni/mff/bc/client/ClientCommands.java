@@ -389,9 +389,13 @@ public class ClientCommands {
     public void stopCalculation(String[] params) {
         if (checkParamNum(0, params)) {
             client.stopRecievingTasks(false);
-        } else {
-            LOG.log(Level.INFO, "Command has no parameters");
+        } else if (checkParamNum(1, params) && params[0].equals("force")) {
+            client.stopRecievingTasks(true);
+        }else{
+            LOG.log(Level.INFO, "Command has 1 optional parameter");
+            LOG.log(Level.INFO, "1: \"force\" to stop the tasks computation immediately, otherwise nothing");
         }
+    
     }
 
     /**
