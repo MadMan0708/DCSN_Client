@@ -181,8 +181,10 @@ public class Checker extends Thread {
                 if (getCoresUsed() < clientParams.getCores()) {
                     if ((tsk = getTaskToCalculate()) != null) { // Check if there are tasks to calculate
                         IProcessHolder holder = new ProccessHolder(tsk, projectJars.get(tsk.getProjectUID()), clientParams.getTemporaryDir().toFile());
+                        if(!executor.isShutdown()){
                         Future<Task> submit = executor.submit(holder);
                         mapping.put(submit, holder);
+                         }
                     } else { // no more tasks, sleep
                         if (getCoresUsed() == 0) { // check if all tasks has been sent to the server
                             LOG.log(Level.FINE, "No tasks to calculate, waiting...");

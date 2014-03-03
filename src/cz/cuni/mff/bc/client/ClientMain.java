@@ -38,7 +38,7 @@ public class ClientMain {
                 if (args[0].equals("nogui")) {
                     client.startClassicConsole();
                     client.initialise();
-                } else if (args[0].startsWith("task=")) {
+                } else if (args[0].startsWith("project=")) {
                     if (getAndSetConsoleHandler() != null) {
                         consoleHandler.setLevel(Level.ALL); // only in this case allow fully logging to the console
                     }

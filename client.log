@@ -71407,3 +71407,130 @@ Mon Jan 27 19:56:00 GMT 2014 Project ProjectF has been uploaded
 
 Mon Jan 27 19:56:16 GMT 2014 Project ProjectF can be canceled during preparation on the server
 
+Mon Mar 03 18:12:57 GMT 2014 Cores limit for task computation is set to: 4
+
+Mon Mar 03 18:12:57 GMT 2014 Memory limit for task computation is set to: 125
+
+Mon Mar 03 18:12:57 GMT 2014 Client name is set to: Petr
+
+Mon Mar 03 18:12:57 GMT 2014 Server address is set to: 25.3.140.89
+
+Mon Mar 03 18:12:57 GMT 2014 Server port is now set to: 1,099
+
+Mon Mar 03 18:12:57 GMT 2014 Temporary dir is set to: C:\Users\Jakub\AppData\Local\Temp\DCSN_temporary
+
+Mon Mar 03 18:12:57 GMT 2014 Download dir is set to: C:\Users\Jakub\DCSN_downloaded
+
+Mon Mar 03 18:12:57 GMT 2014 Upload dir is set to: C:\Users\Jakub\DCSN_uploaded
+
+Mon Mar 03 18:12:57 GMT 2014 Request packet sent to: 255.255.255.255 (DEFAULT)
+
+Mon Mar 03 18:12:57 GMT 2014 Request packet sent to: 47.115.119.105; Interface: Intel(R) Centrino(R) Wireless-N 1000
+
+Mon Mar 03 18:12:57 GMT 2014 Looping over all network interfaces done. Now waiting for a reply!
+
+Mon Mar 03 18:17:34 GMT 2014 Cores limit for task computation is set to: 4
+
+Mon Mar 03 18:17:34 GMT 2014 Memory limit for task computation is set to: 125
+
+Mon Mar 03 18:17:34 GMT 2014 Client name is set to: Petr
+
+Mon Mar 03 18:17:34 GMT 2014 Server address is set to: 25.3.140.89
+
+Mon Mar 03 18:17:34 GMT 2014 Server port is now set to: 1,099
+
+Mon Mar 03 18:17:34 GMT 2014 Temporary dir is set to: C:\Users\Jakub\AppData\Local\Temp\DCSN_temporary
+
+Mon Mar 03 18:17:34 GMT 2014 Download dir is set to: C:\Users\Jakub\DCSN_downloaded
+
+Mon Mar 03 18:17:34 GMT 2014 Upload dir is set to: C:\Users\Jakub\DCSN_uploaded
+
+Mon Mar 03 18:17:34 GMT 2014 Request packet sent to: 255.255.255.255 (DEFAULT)
+
+Mon Mar 03 18:17:34 GMT 2014 Request packet sent to: 49.118.44.220; Interface: Intel(R) Centrino(R) Wireless-N 1000
+
+Mon Mar 03 18:17:34 GMT 2014 Looping over all network interfaces done. Now waiting for a reply!
+
+Mon Mar 03 18:18:02 GMT 2014 Cores limit for task computation is set to: 4
+
+Mon Mar 03 18:18:02 GMT 2014 Memory limit for task computation is set to: 125
+
+Mon Mar 03 18:18:02 GMT 2014 Client name is set to: Petr
+
+Mon Mar 03 18:18:02 GMT 2014 Server address is set to: 25.3.140.89
+
+Mon Mar 03 18:18:02 GMT 2014 Server port is now set to: 1,099
+
+Mon Mar 03 18:18:02 GMT 2014 Temporary dir is set to: C:\Users\Jakub\AppData\Local\Temp\DCSN_temporary
+
+Mon Mar 03 18:18:02 GMT 2014 Download dir is set to: C:\Users\Jakub\DCSN_downloaded
+
+Mon Mar 03 18:18:02 GMT 2014 Upload dir is set to: C:\Users\Jakub\DCSN_uploaded
+
+Mon Mar 03 18:18:02 GMT 2014 Request packet sent to: 255.255.255.255 (DEFAULT)
+
+Mon Mar 03 18:18:02 GMT 2014 Looping over all network interfaces done. Now waiting for a reply!
+
+Mon Mar 03 18:18:02 GMT 2014 Broadcast response from server: 192.168.0.5
+
+Mon Mar 03 18:18:02 GMT 2014 Server address is set to: 192.168.0.5
+
+Mon Mar 03 18:18:03 GMT 2014 Connected to the server 192.168.0.5:1,099 with client ID Petr
+
+Mon Mar 03 18:18:03 GMT 2014 Client Petr has no tasks in progress
+
+Mon Mar 03 18:18:03 GMT 2014 Cores limit 4 for tasks has been set on server
+
+Mon Mar 03 18:18:03 GMT 2014 Memory limit 125m for tasks has been set on server
+
+Mon Mar 03 18:18:43 GMT 2014 File which contains data of the project D:\BC\T.zip does not exist or does not have zip extension
+
+Mon Mar 03 18:18:53 GMT 2014 Project: Weather, Preparing files for upload. Uploading will start immedeatelly after.
+
+Mon Mar 03 18:18:53 GMT 2014 Project: Weather, Uploading started
+
+Mon Mar 03 18:18:53 GMT 2014 Project: Weather, Uploaded: 0 %...
+
+Mon Mar 03 18:18:53 GMT 2014 Project: Weather, Uploaded: 100 %...
+
+Mon Mar 03 18:18:53 GMT 2014 Project Weather has been uploaded
+
+Mon Mar 03 18:19:00 GMT 2014 No tasks to calculate, waiting...
+
+Mon Mar 03 18:19:00 GMT 2014 Client is now participating in task computation
+
+Mon Mar 03 18:19:38 GMT 2014 Cores limit for task computation is set to: 10
+
+Mon Mar 03 18:19:38 GMT 2014 Cores limit 10 for tasks has been set on server
+
+Mon Mar 03 18:20:01 GMT 2014 Virtual machine for task Petr_Weather_data_9.txt launched
+
+Mon Mar 03 18:20:01 GMT 2014 Task : Petr_Weather_data_9.txt >> calculation started
+
+Mon Mar 03 18:20:02 GMT 2014 Virtual machine for task Petr_Weather_data_7.txt launched
+
+Mon Mar 03 18:20:02 GMT 2014 Task : Petr_Weather_data_7.txt >> calculation started
+
+Mon Mar 03 18:20:05 GMT 2014 Virtual machine for task Petr_Weather_data_0.txt launched
+
+Mon Mar 03 18:20:05 GMT 2014 Task : Petr_Weather_data_0.txt >> calculation started
+
+Mon Mar 03 18:20:05 GMT 2014 Calculation of Petr_Weather_data_9.txt has been canceled
+
+Mon Mar 03 18:20:09 GMT 2014 Task : Petr_Weather_data_7.txt >> calculation completed
+
+Mon Mar 03 18:20:10 GMT 2014 Task : Petr_Weather_data_0.txt >> calculation completed
+
+Mon Mar 03 18:21:05 GMT 2014 Canceling taks from client problem: Connection reset; nested exception is: 
+	java.net.SocketException: Connection reset
+
+Mon Mar 03 18:21:05 GMT 2014 Calculation of Petr_Weather_data_0.txt has been canceled
+
+Mon Mar 03 18:21:05 GMT 2014 Canceling taks from client problem: Session closed (Ping failure)
+
+Mon Mar 03 18:21:05 GMT 2014 Calculation of Petr_Weather_data_7.txt has been canceled
+
+Mon Mar 03 18:21:05 GMT 2014 Canceling taks from client problem: Session closed (Ping failure)
+
+Mon Mar 03 18:21:05 GMT 2014 Client has stopped computation of tasks
+
