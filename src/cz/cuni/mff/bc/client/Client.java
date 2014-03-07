@@ -375,7 +375,7 @@ public class Client implements IConsole {
     }
 
     @Override
-    public void proceedCommand(String command) {
+    public void processCommand(String command) {
         String[] cmd = ClientCommands.parseCommand(command);
         String[] params = Arrays.copyOfRange(cmd, 1, cmd.length);
         try {
@@ -411,7 +411,7 @@ public class Client implements IConsole {
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
                     while (true) {
                         System.out.print("client>");
-                        proceedCommand(br.readLine());
+                        processCommand(br.readLine());
                     }
                 } catch (IOException e) {
                     LOG.log(Level.WARNING, "Problem with reading command from console");

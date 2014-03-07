@@ -16,7 +16,7 @@ public interface IConsole {
      *
      * @param cmd string containing the command exactly how was written by user
      */
-    public void proceedCommand(String cmd);
+    public void processCommand(String cmd);
 
     /**
      * Start graphical console

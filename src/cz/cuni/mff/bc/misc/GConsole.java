@@ -159,7 +159,7 @@ public class GConsole extends Thread implements ILogTarget {
                         printToHistory(inputDeviceType + "> " + this.getText());
                         addToHist(this.getText());
                         restartHist();
-                        node.proceedCommand(this.getText());
+                        node.processCommand(this.getText());
                     }
                     this.setText("");
                     return Result.EVENT_HANDLED;
