@@ -17,7 +17,7 @@ import java.io.PrintWriter;
  */
 public class FileLogger implements ILogTarget {
 
-    private File logFile;
+    private final File logFile;
 
     /**
      * Constructor

@@ -15,7 +15,7 @@ import java.util.logging.LogRecord;
  */
 public class CustomHandler extends Handler {
 
-    private ArrayList<ILogTarget> targets = new ArrayList<>();
+    private final ArrayList<ILogTarget> targets = new ArrayList<>();
 
     /**
      * Adds new logging target to the log handler

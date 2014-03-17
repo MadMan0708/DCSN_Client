@@ -17,7 +17,7 @@ import java.lang.reflect.Proxy;
  */
 public class CustomObjectInputStream extends ObjectInputStream {
 
-    private CustomClassLoader cl;
+    private final CustomClassLoader cl;
 
     /**
      * Constructor

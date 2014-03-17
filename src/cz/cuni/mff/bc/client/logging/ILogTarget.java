@@ -11,10 +11,10 @@ package cz.cuni.mff.bc.client.logging;
  */
 public interface ILogTarget {
 
-    /**
-     * Logs the message
-     *
-     * @param message message to log
-     */
-    public void log(String message);
+ /**
+  * Logs the message
+  *
+  * @param message message to log
+  */
+ public void log(String message);
 }

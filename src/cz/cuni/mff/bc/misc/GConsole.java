@@ -33,23 +33,23 @@ import java.util.LinkedList;
  */
 public class GConsole extends Thread implements ILogTarget {
 
-    private WindowListener listener;
-    private String inputDeviceType;
-    private SwingTerminal terminal;
-    private Screen screen;
-    private GUIScreen GUI;
-    private Panel mainPanel;
-    private Panel inputPanel;
-    private Panel historyPanel;
-    private Panel logPanel;
+    private final WindowListener listener;
+    private final String inputDeviceType;
+    private final SwingTerminal terminal;
+    private final Screen screen;
+    private final GUIScreen GUI;
+    private final Panel mainPanel;
+    private final Panel inputPanel;
+    private final Panel historyPanel;
+    private final Panel logPanel;
     private TextBox input;
-    private TextArea log;
-    private TextArea history;
-    private IConsole node;
-    private Window mainWindow;
+    private final TextArea log;
+    private final TextArea history;
+    private final IConsole node;
+    private final Window mainWindow;
     private int position = -1;
     private final int inputHistoryCapacity = 10;
-    private LinkedList<String> hist = new LinkedList<>();
+    private final LinkedList<String> hist = new LinkedList<>();
 
     private void restartHist() {
         position = -1;

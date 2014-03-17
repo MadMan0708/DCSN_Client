@@ -44,14 +44,14 @@ public class Checker extends Thread {
 
     private HashMap<ProjectUID, File> projectJars;
     private final long sleepThreadTime = 60000;
-    private IServer remoteService;
-    private ExecutorService executor;
+    private final IServer remoteService;
+    private final ExecutorService executor;
     private ConcurrentHashMap<Future<Task>, IProcessHolder> mapping;
     private boolean calculationInProgress;
     private boolean receivingTasks;
-    private CustomClassLoader clientCustClassLoader;
-    private File baseJarDir;
-    private ClientParams clientParams;
+    private final CustomClassLoader clientCustClassLoader;
+    private final File baseJarDir;
+    private final ClientParams clientParams;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
     /**

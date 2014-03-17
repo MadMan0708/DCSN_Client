@@ -31,8 +31,8 @@ public class Connector {
     private CustomClassLoader cl;
     private Checker checker;
     private Timer timer;
-    private long informPeriod = 1000;
-    private ClientParams clientParams;
+    private final long informPeriod = 1000;
+    private final ClientParams clientParams;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
     /**
@@ -75,11 +75,7 @@ public class Connector {
      * @return true if checker is receiving tasks, false otherwise
      */
     public boolean isReceivingTasks() {
-        if (checker == null || !checker.isCalculationInProgress()) {
-            return false;
-        } else {
-            return true;
-        }
+        return checker != null && checker.isCalculationInProgress();
     }
 
     private void sendInformMessage(InformMessage message) throws RemoteException {

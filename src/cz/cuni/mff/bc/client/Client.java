@@ -46,18 +46,19 @@ import java.util.logging.Level;
 public class Client implements IConsole {
 
     private StandardRemoteProvider standartRemoteProvider;
-    private CustomHandler logHandler;
-    private Connector connector;
-    private ClientCommands commands;
+    private final CustomHandler logHandler;
+    private final Connector connector;
+    private final ClientCommands commands;
     private GConsole con;
-    private ClientParams clientParams;
+    private final ClientParams clientParams;
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(Client.class.getName());
-    private ExecutorService executor = Executors.newCachedThreadPool();
+    private final ExecutorService executor;
 
     /**
      * Constructor
      */
     public Client() {
+        this.executor = Executors.newCachedThreadPool();
         logHandler = new CustomHandler();
         logHandler.setFormatter(new CustomFormater());
         logHandler.setLevel(Level.ALL);
@@ -402,7 +403,7 @@ public class Client implements IConsole {
             });
             method.invoke(commands, new Object[]{params});
         } catch (ClassNotFoundException e) {
-            // will be never thrown
+            // is never thrown
         } catch (IllegalAccessException e) {
         } catch (IllegalArgumentException e) {
         } catch (InvocationTargetException e) {

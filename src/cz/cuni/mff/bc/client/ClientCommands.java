@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  */
 public class ClientCommands {
 
-    private Client client;
+    private final Client client;
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
 
     /**
@@ -49,11 +49,7 @@ public class ClientCommands {
      * @return true if number of parameters is correct, false otherwise
      */
     public static boolean checkParamNum(int expected, String[] params) {
-        if (expected == params.length) {
-            return true;
-        } else {
-            return false;
-        }
+        return expected == params.length;
     }
 
     /**

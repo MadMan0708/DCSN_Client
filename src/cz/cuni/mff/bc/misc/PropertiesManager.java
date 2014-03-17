@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  */
 public class PropertiesManager {
 
-    private String file;
+    private final String file;
     private Properties prop = new Properties();
     private boolean propSet = false;
     private static final Logger LOG = Logger.getLogger(PropertiesManager.class.getName());

@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  */
 public class ClientParams {
 
-    private PropertiesManager propMan;
+    private final PropertiesManager propMan;
     private String clientName;
     private String serverAddress;
     private int serverPort;
@@ -99,11 +99,7 @@ public class ClientParams {
     }
 
     private boolean validatePort(int port) {
-        if (port >= 1 && port <= 65535) {
-            return true;
-        } else {
-            return false;
-        }
+        return port >= 1 && port <= 65535;
     }
 
     /**

@@ -30,9 +30,9 @@ public class ProccessHolder implements IProcessHolder {
 
     private static final Logger LOG = Logger.getLogger(Client.class.getName());
     private Task tsk;
-    private File classPath;
-    private File tempDir;
-    private CustomClassLoader customCL;
+    private final File classPath;
+    private final File tempDir;
+    private final CustomClassLoader customCL;
     private Process process = null;
 
     /**
@@ -119,7 +119,7 @@ public class ProccessHolder implements IProcessHolder {
                         }
                         try (BufferedReader reader = new BufferedReader(
                                 new InputStreamReader(inputStrem))) {
-                            String line = null;
+                            String line=null;
                             while ((line = reader.readLine()) != null) {
                                 LOG.log(Level.FINE, "Process: {0} >> {1}", new Object[]{process.toString(), line});
                             }
