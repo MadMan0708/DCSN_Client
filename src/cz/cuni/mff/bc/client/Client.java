@@ -256,10 +256,19 @@ public class Client implements IConsole {
         }
     }
 
+    public void connectInNewThread(){
+        LOG.log(Level.INFO,"Trying to connect to the server...");
+        new Thread(){
+            @Override
+            public void run() {
+                connect();
+            }
+        }.start();
+    }
     /**
      * Connects to the server
      */
-    public void connect() {
+    private void connect() {
         try {
             if (connector.connect()) {
                 standartRemoteProvider = new StandardRemoteProvider(connector.getRemoteService(), clientParams.getClientName(),

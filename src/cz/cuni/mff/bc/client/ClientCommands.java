@@ -6,13 +6,9 @@ package cz.cuni.mff.bc.client;
 
 import cz.cuni.mff.bc.api.enums.ProjectState;
 import cz.cuni.mff.bc.api.main.CustomIO;
-import cz.cuni.mff.bc.api.main.JarTools;
-import java.io.File;
-import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -405,14 +401,16 @@ public class ClientCommands {
      */
     public void connect(String[] params) {
         if (params.length == 0) {
-            client.connect();
+            client.connectInNewThread();
         } else {
             try {
                 if (params.length == 1) {
                     client.getClientParams().setServerIPPort(params[0]);
+                    client.connectInNewThread();
                 } else if (params.length == 2) {
                     client.getClientParams().setServerAddress(params[0]);
                     client.getClientParams().setServerPort(Integer.parseInt(params[1]));
+                    client.connectInNewThread();
                 } else {
                     LOG.log(Level.INFO, "Incorect number of parameter, can be 0, 1 or 2");
                     LOG.log(Level.INFO, "See user documentation");
@@ -420,11 +418,11 @@ public class ClientCommands {
             } catch (UnknownHostException e) {
                 LOG.log(Level.WARNING, "Host or IP address is not valid");
                 LOG.log(Level.INFO, "Trying to connect with original address {0}", client.getClientParams().getServerAddress());
-                client.connect();
+                client.connectInNewThread();
             } catch (IllegalArgumentException e) {
                 LOG.log(Level.WARNING, "Port number is not valid");
                 LOG.log(Level.INFO, "Trying to connect with original port {0}", client.getClientParams().getServerPort());
-                client.connect();
+                client.connectInNewThread();
             }
         }
     }
