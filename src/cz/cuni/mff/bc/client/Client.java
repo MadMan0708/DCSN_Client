@@ -111,8 +111,12 @@ public class Client implements IConsole {
         new Thread() {
             @Override
             public void run() {
+                LOG.log(Level.INFO,"Trying to connect to the server...");
+                connect();
+                if(!isConnected()){
+                    System.out.println("search");
                 searchForServer();
-
+                }
             }
         }.start();
     }
