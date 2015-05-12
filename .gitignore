@@ -1,2 +1,10 @@
-/dist/
-/build/
+dist/
+build/
+dev-docs/
+.idea/
+client.iml
+client.log
+client.config.properties
+
+
+
