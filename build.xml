@@ -9,16 +9,36 @@
     <property name="doc.dir" value="${basedir}/docs"/>
     <property name="dist.dir" value="${basedir}/dist"/>
 
-    <!-- application name etc -->
+    <!-- various properties-->
     <property name="app.jar.name" value="DCSNClient"/>
+    <property name="compiler.args" value="-encoding UTF-8 -source 1.7"/>
 
-    <!-- Define the project classpath -->
-    <path id="project.classpath">
+    <!-- Path to the JDK jars -->
+    <path id="jdk.classpath">
+        <fileset dir="${java.home}" includes="lib/">
+		<include name="**/*.jar"/> 	
+	</fileset> 
+    </path>
+
+    <!-- Path to the project libraries-->
+    <path id="project.libraries.classpath">
         <fileset dir="${lib.dir}">
             <include name="**/*.jar"/>
         </fileset>
-        <pathelement path="${build.dir}"/>
     </path>
+
+
+    <path id="compile.classpath">
+        <path refid="project.libraries.classpath"/>
+        <path refid="jdk.classpath"/>
+    </path>
+
+    <path id="runtime.classpath">
+        <path refid="jdk.classpath"/>
+        <pathelement location="${build.dir}"/>
+        <path refid="project.libraries.classpath"/>
+    </path>
+
 
     <target name="clean" description="Clean the build">
         <delete dir="${build.dir}"/>
@@ -36,22 +56,23 @@
 
     <target name="javadoc" description="Generate javadoc documentation">
         <javadoc destdir="${doc.dir}" windowtitle="DCSN-Client" sourcepath="${src.dir}">
-            <classpath refid="project.classpath"/>
+            <classpath refid="compile.classpath"/>
         </javadoc>
         <echo>Generated javadoc is in the ${doc.dir} directory</echo>
     </target>
 
     <target name="compile" depends="init" description="Compile the application">
-        <javac includeantruntime="false" srcdir="${src.dir}"
-               destdir="${build.dir}">
-            <classpath refid="project.classpath"/>
+        <javac srcdir="${src.dir}"
+               destdir="${build.dir}" includeantruntime="false">
+            <compilerarg line="${compiler.args}"/>
+            <classpath refid="compile.classpath"/>
         </javac>
     </target>
 
     <target name="run" depends="init, compile" description="Run the application">
-        <java classname="cz.cuni.mff.bc.client.ClientMain">
-            <classpath refid="project.classpath"/>
+        <java classname="cz.cuni.mff.bc.client.ClientMain" classpathref="runtime.classpath" fork="true">
         </java>
+
     </target>
 
     <target name="jar" depends="init,compile" description="Generate JAR file containing application files">

@@ -3,6 +3,8 @@ DCSN Client
 
 Distributed Computing in Small Networks - The client application
 
+This application requires Java 1.7
+
 To run the application, call ant run
 
 To compile the application, call ant compile
